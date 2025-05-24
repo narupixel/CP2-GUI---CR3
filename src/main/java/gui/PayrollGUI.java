@@ -19,15 +19,8 @@ import java.util.List;
 public class PayrollGUI extends JFrame {
     // GUI components
     private JTextField employeeNumberField;
-    private JButton searchButton;
-    private JPanel detailsPanel;
-    private JLabel detailsLabel;
-
-    private JSpinner startDateSpinner;
-    private JSpinner endDateSpinner;
     private JButton calculateButton;
-    private JPanel resultsPanel;
-    private JScrollPane resultsScrollPane;
+    private JPanel detailsPanel;
 
     private EmployeeProfile selectedEmployee;
     private List<EmployeeProfile> employees;
@@ -42,176 +35,170 @@ public class PayrollGUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Top panel: Employee search
+        // Top panel: Employee number, month, year, and calculate button
         JPanel searchPanel = new JPanel(new FlowLayout());
         searchPanel.add(new JLabel("Employee Number:"));
         employeeNumberField = new JTextField(10);
         searchPanel.add(employeeNumberField);
-        searchButton = new JButton("Search");
-        searchPanel.add(searchButton);
+        // Month dropdown
+        String[] months = java.util.Arrays.stream(java.time.Month.values())
+            .map(m -> String.format("%02d - %s", m.getValue(), m.name().substring(0,1) + m.name().substring(1).toLowerCase()))
+            .toArray(String[]::new);
+        JComboBox<String> monthCombo = new JComboBox<>(months);
+        searchPanel.add(new JLabel("Month:"));
+        searchPanel.add(monthCombo);
+        // Year dropdown (current year +/- 5 years)
+        int currentYear = java.time.Year.now().getValue();
+        Integer[] years = new Integer[11];
+        for (int i = 0; i < 11; i++) years[i] = currentYear - 5 + i;
+        JComboBox<Integer> yearCombo = new JComboBox<>(years);
+        yearCombo.setSelectedItem(currentYear);
+        searchPanel.add(new JLabel("Year:"));
+        searchPanel.add(yearCombo);
+        // Calculate button
+        calculateButton = new JButton("Calculate");
+        searchPanel.add(calculateButton);
         add(searchPanel, BorderLayout.NORTH);
 
         // Center panel: Details and pay coverage
         detailsPanel = new JPanel();
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
-        detailsLabel = new JLabel("Enter an employee number and click Search.");
-        detailsPanel.add(detailsLabel);
-
-        // Date pickers for pay coverage
-        JPanel datePanel = new JPanel(new FlowLayout());
-        datePanel.add(new JLabel("Pay Coverage Start:"));
-        startDateSpinner = new JSpinner(new SpinnerDateModel());
-        JSpinner.DateEditor startEditor = new JSpinner.DateEditor(startDateSpinner, "MM/dd/yyyy");
-        startDateSpinner.setEditor(startEditor);
-        datePanel.add(startDateSpinner);
-
-        datePanel.add(new JLabel("End:"));
-        endDateSpinner = new JSpinner(new SpinnerDateModel());
-        JSpinner.DateEditor endEditor = new JSpinner.DateEditor(endDateSpinner, "MM/dd/yyyy");
-        endDateSpinner.setEditor(endEditor);
-        datePanel.add(endDateSpinner);
-
-        calculateButton = new JButton("Calculate");
-        datePanel.add(calculateButton);
-
-        detailsPanel.add(datePanel);
+        // detailsLabel = new JLabel("Enter an employee number and click Search.");
+        // detailsPanel.add(detailsLabel);
 
         // Output area (replaced by resultsPanel)
         // outputArea = new JTextArea(12, 50);
         // outputArea.setEditable(false);
         // scrollPane = new JScrollPane(outputArea);
-        resultsPanel = new JPanel();
+        JPanel resultsPanel = new JPanel();
         resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
         resultsPanel.setBackground(Color.WHITE);
-        resultsScrollPane = new JScrollPane(resultsPanel);
+        JScrollPane resultsScrollPane = new JScrollPane(resultsPanel);
         resultsScrollPane.setPreferredSize(new Dimension(550, 250));
         detailsPanel.add(resultsScrollPane);
 
         add(detailsPanel, BorderLayout.CENTER);
 
         // Always show pay coverage and output for debugging
-        datePanel.setVisible(true);
         resultsScrollPane.setVisible(true);
         calculateButton.setEnabled(true);
 
-        // Action: Search employee
-        searchButton.addActionListener((ActionEvent e) -> {
-            String empNum = employeeNumberField.getText().trim();
-            selectedEmployee = employees.stream()
-                    .filter(emp -> emp.getEmployeeNumber().equals(empNum))
-                    .findFirst().orElse(null);
-
-            if (selectedEmployee != null) {
-                detailsLabel.setText("<html><b>Employee:</b> " + selectedEmployee.getFirstName() + " " + selectedEmployee.getLastName()
-                        + "<br><b>Position:</b> " + selectedEmployee.getPosition()
-                        + "<br><b>Status:</b> " + selectedEmployee.getStatus() + "</html>");
-                datePanel.setVisible(true);
-                resultsScrollPane.setVisible(true); // <-- change from false to true
-                resultsPanel.removeAll();
-                resultsPanel.revalidate();
-                resultsPanel.repaint();
-            } else {
-                JOptionPane.showMessageDialog(this, "Employee not found.", "Error", JOptionPane.ERROR_MESSAGE);
-                detailsLabel.setText("Enter an employee number and click Search.");
-                datePanel.setVisible(false);
-                resultsScrollPane.setVisible(false);
-                resultsPanel.removeAll();
-                resultsPanel.revalidate();
-                resultsPanel.repaint();
-            }
-        });
-
-        // Action: Calculate payroll for date range
+        // Action: Calculate payroll for selected month
         calculateButton.addActionListener((ActionEvent e) -> {
             resultsPanel.removeAll();
             resultsPanel.revalidate();
             resultsPanel.repaint();
             resultsScrollPane.setVisible(true);
+            String empNum = employeeNumberField.getText().trim();
+            selectedEmployee = employees.stream()
+                    .filter(emp -> emp.getEmployeeNumber().equals(empNum))
+                    .findFirst().orElse(null);
             if (selectedEmployee == null) {
-                JLabel noEmp = new JLabel("No employee selected.");
+                JLabel noEmp = new JLabel("No employee found for number: " + empNum);
                 noEmp.setForeground(Color.RED);
                 resultsPanel.add(noEmp);
+                // detailsLabel.setText("Enter a valid employee number.");
                 resultsPanel.revalidate();
                 return;
             }
+            // Show Employee Number, Name, and Birthday at the top of the resultsPanel, fully left-aligned
+            String birthday = selectedEmployee.getBirthday();
+            JPanel empPanel = new JPanel();
+            empPanel.setLayout(new BoxLayout(empPanel, BoxLayout.Y_AXIS));
+            empPanel.setBackground(Color.WHITE);
+            empPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            JLabel empNumLabel = new JLabel("Employee Number: " + selectedEmployee.getEmployeeNumber());
+            empNumLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+            empNumLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            JLabel nameLabel = new JLabel("Name: " + selectedEmployee.getFirstName() + " " + selectedEmployee.getLastName());
+            nameLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+            nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            JLabel bdayLabel = new JLabel("Birthday: " + birthday);
+            bdayLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+            bdayLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            empPanel.add(empNumLabel);
+            empPanel.add(nameLabel);
+            empPanel.add(bdayLabel);
+            empPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 0));
+            resultsPanel.add(empPanel);
+            resultsPanel.add(Box.createVerticalStrut(5));
+            int monthIdx = monthCombo.getSelectedIndex() + 1;
+            int year = (Integer) yearCombo.getSelectedItem();
+            LocalDate startDate = LocalDate.of(year, monthIdx, 1);
+            LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
             try {
-                LocalDate startDate = ((Date) startDateSpinner.getValue()).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                LocalDate endDate = ((Date) endDateSpinner.getValue()).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                 List<TimeLog> logs = LoadTimeSheet.loadForEmployee(attendanceFile, selectedEmployee.getEmployeeNumber());
                 List<TimeLog> filteredLogs = logs.stream()
                         .filter(log -> !log.getDate().isBefore(startDate) && !log.getDate().isAfter(endDate))
                         .toList();
                 if (filteredLogs.isEmpty()) {
-                    JLabel noRecords = new JLabel("No attendance records found for this employee in the selected date range.");
+                    JLabel noRecords = new JLabel("No attendance records found for this employee in the selected month.");
                     noRecords.setForeground(Color.RED);
                     resultsPanel.add(noRecords);
                 } else {
-                    List<WeeklyTotals> weeklyTotalsList = CalculateWeeklyTotals.calculateWeeklyTotals(selectedEmployee, filteredLogs);
-                    for (WeeklyTotals weeklyTotals : weeklyTotalsList) {
-                        JPanel weekPanel = new JPanel();
-                        weekPanel.setLayout(new GridLayout(0, 2, 8, 2));
-                        weekPanel.setBorder(BorderFactory.createCompoundBorder(
-                                BorderFactory.createLineBorder(new Color(200,200,200)),
-                                BorderFactory.createEmptyBorder(10, 10, 10, 10)));
-                        weekPanel.setBackground(Color.WHITE);
-                        // Minimalist, professional font
-                        Font labelFont = new Font("SansSerif", Font.PLAIN, 13);
-                        Font boldFont = new Font("SansSerif", Font.BOLD, 14);
-                        // Header
-                        JLabel header = new JLabel("Payroll Summary for Week " + weeklyTotals.getWeekNumber());
-                        header.setFont(boldFont);
-                        header.setForeground(new Color(30, 30, 30));
-                        weekPanel.add(header);
-                        weekPanel.add(new JLabel(""));
-                        weekPanel.add(new JLabel("Pay Period:"));
-                        weekPanel.add(new JLabel(weeklyTotals.getPeriodStart() + " to " + weeklyTotals.getPeriodEnd()));
-                        double rice = selectedEmployee.getRiceSubsidy();
-                        double phone = selectedEmployee.getPhoneAllowance();
-                        double clothing = selectedEmployee.getClothingAllowance();
-                        double totalAllowances = rice + phone + clothing;
-                        double grossWeeklyPay = weeklyTotals.getTotalHoursWorked() * selectedEmployee.getHourlyRate() + totalAllowances;
-                        double pagibig = governmentContributions.CalculatePagibig.computeFromWeekly(grossWeeklyPay);
-                        double philhealth = governmentContributions.CalculatePhilhealth.computeFromWeekly(grossWeeklyPay);
-                        double sss = governmentContributions.CalculateSss.computeFromWeekly(grossWeeklyPay);
-                        double withholdingTax = governmentContributions.CalculateWithholdingTax.compute(grossWeeklyPay);
-                        double totalDeductions = pagibig + philhealth + sss + withholdingTax;
-                        double netWeeklyPay = grossWeeklyPay - totalDeductions;
-                        weekPanel.add(new JLabel("Gross Weekly Pay:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", grossWeeklyPay)));
-                        weekPanel.add(new JLabel("Rice Subsidy:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", rice)));
-                        weekPanel.add(new JLabel("Phone Allowance:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", phone)));
-                        weekPanel.add(new JLabel("Clothing Allowance:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", clothing)));
-                        weekPanel.add(new JLabel("Total Allowances:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", totalAllowances)));
-                        weekPanel.add(new JLabel("Pag-IBIG:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", pagibig)));
-                        weekPanel.add(new JLabel("PhilHealth:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", philhealth)));
-                        weekPanel.add(new JLabel("SSS:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", sss)));
-                        weekPanel.add(new JLabel("Withholding Tax:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", withholdingTax)));
-                        weekPanel.add(new JLabel("Total Deductions:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", totalDeductions)));
-                        weekPanel.add(new JLabel("Total Hours Worked:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", weeklyTotals.getTotalHoursWorked())));
-                        weekPanel.add(new JLabel("Total Overtime:"));
-                        weekPanel.add(new JLabel(String.format("%.2f", weeklyTotals.getTotalOvertime())));
-                        // Net Weekly Pay - bold, green, bottom
-                        JLabel netPayLabel = new JLabel("NET WEEKLY PAY:");
-                        netPayLabel.setFont(boldFont);
-                        netPayLabel.setForeground(new Color(0, 128, 0));
-                        JLabel netPayValue = new JLabel(String.format("%.2f", netWeeklyPay));
-                        netPayValue.setFont(boldFont);
-                        netPayValue.setForeground(new Color(0, 128, 0));
-                        weekPanel.add(netPayLabel);
-                        weekPanel.add(netPayValue);
-                        resultsPanel.add(Box.createVerticalStrut(10));
-                        resultsPanel.add(weekPanel);
-                    }
+                    // Monthly aggregation
+                    double totalHours = filteredLogs.stream().mapToDouble(TimeLog::getHoursWorked).sum();
+                    double totalOvertime = filteredLogs.stream().mapToDouble(TimeLog::getOvertime).sum();
+                    double rice = selectedEmployee.getRiceSubsidy();
+                    double phone = selectedEmployee.getPhoneAllowance();
+                    double clothing = selectedEmployee.getClothingAllowance();
+                    double totalAllowances = rice + phone + clothing;
+                    double grossMonthlyPay = totalHours * selectedEmployee.getHourlyRate() + totalAllowances;
+                    double pagibig = governmentContributions.CalculatePagibig.computeFromWeekly(grossMonthlyPay / 4.0) * 4.0;
+                    double philhealth = governmentContributions.CalculatePhilhealth.computeFromWeekly(grossMonthlyPay / 4.0) * 4.0;
+                    double sss = governmentContributions.CalculateSss.computeFromWeekly(grossMonthlyPay / 4.0) * 4.0;
+                    double withholdingTax = governmentContributions.CalculateWithholdingTax.compute(grossMonthlyPay);
+                    double totalDeductions = pagibig + philhealth + sss + withholdingTax;
+                    double netMonthlyPay = grossMonthlyPay - totalDeductions;
+                    JPanel monthPanel = new JPanel();
+                    monthPanel.setLayout(new GridLayout(0, 2, 8, 2));
+                    monthPanel.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(new Color(200,200,200)),
+                            BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+                    monthPanel.setBackground(Color.WHITE);
+                    monthPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    Font boldFont = new Font("SansSerif", Font.BOLD, 14);
+                    JLabel header = new JLabel("Payroll Summary for " + startDate.getMonth() + " " + startDate.getYear());
+                    header.setFont(boldFont);
+                    header.setForeground(new Color(30, 30, 30));
+                    monthPanel.add(header);
+                    monthPanel.add(new JLabel(""));
+                    monthPanel.add(new JLabel("Period:"));
+                    monthPanel.add(new JLabel(startDate + " to " + endDate));
+                    monthPanel.add(new JLabel("Gross Monthly Pay:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", grossMonthlyPay)));
+                    monthPanel.add(new JLabel("Rice Subsidy:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", rice)));
+                    monthPanel.add(new JLabel("Phone Allowance:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", phone)));
+                    monthPanel.add(new JLabel("Clothing Allowance:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", clothing)));
+                    monthPanel.add(new JLabel("Total Allowances:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", totalAllowances)));
+                    monthPanel.add(new JLabel("Pag-IBIG:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", pagibig)));
+                    monthPanel.add(new JLabel("PhilHealth:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", philhealth)));
+                    monthPanel.add(new JLabel("SSS:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", sss)));
+                    monthPanel.add(new JLabel("Withholding Tax:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", withholdingTax)));
+                    monthPanel.add(new JLabel("Total Deductions:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", totalDeductions)));
+                    monthPanel.add(new JLabel("Total Hours Worked:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", totalHours)));
+                    monthPanel.add(new JLabel("Total Overtime:"));
+                    monthPanel.add(new JLabel(String.format("%.2f", totalOvertime)));
+                    JLabel netPayLabel = new JLabel("NET MONTHLY PAY:");
+                    netPayLabel.setFont(boldFont);
+                    netPayLabel.setForeground(new Color(0, 128, 0));
+                    JLabel netPayValue = new JLabel(String.format("%.2f", netMonthlyPay));
+                    netPayValue.setFont(boldFont);
+                    netPayValue.setForeground(new Color(0, 128, 0));
+                    monthPanel.add(netPayLabel);
+                    monthPanel.add(netPayValue);
+                    resultsPanel.add(Box.createVerticalStrut(10));
+                    resultsPanel.add(monthPanel);
                 }
                 resultsPanel.revalidate();
                 resultsPanel.repaint();
