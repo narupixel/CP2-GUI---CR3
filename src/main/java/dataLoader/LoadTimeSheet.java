@@ -37,19 +37,22 @@ public class LoadTimeSheet {
                 String[] fields = line.split("\t");
                 if (fields.length < 6) continue;
                 if (!fields[0].equals(employeeNumber)) continue;
-
-                LocalDate date = LocalDate.parse(fields[3], DATE_FORMAT);
-                LocalTime logIn = LocalTime.parse(fields[4], TIME_FORMAT);
-                LocalTime logOut = LocalTime.parse(fields[5], TIME_FORMAT);
-
-                logs.add(new TimeLog(
-                        fields[0], // employeeNumber
-                        fields[1], // lastName
-                        fields[2], // firstName
-                        date,
-                        logIn,
-                        logOut
-                ));
+                try {
+                    LocalDate date = LocalDate.parse(fields[3], DATE_FORMAT);
+                    LocalTime logIn = LocalTime.parse(fields[4], TIME_FORMAT);
+                    LocalTime logOut = LocalTime.parse(fields[5], TIME_FORMAT);
+                    logs.add(new TimeLog(
+                            fields[0], // employeeNumber
+                            fields[1], // lastName
+                            fields[2], // firstName
+                            date,
+                            logIn,
+                            logOut
+                    ));
+                } catch (Exception parseEx) {
+                    System.err.println("[ERROR] Failed to parse line: " + line);
+                    parseEx.printStackTrace();
+                }
             }
         } catch (IOException e) {
             System.err.println("Error loading time sheet: " + e.getMessage());

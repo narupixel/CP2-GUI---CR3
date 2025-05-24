@@ -29,18 +29,6 @@ public class CalculateWeeklyTotals {
         return weeklyTotalsList;
     }
 
-    // Finds or creates a WeeklyTotals for a given week and employee
-    private WeeklyTotals findOrCreateWeeklyTotal(String employeeId, int weekNumber, LocalDate date, EmployeeProfile employee, List<WeeklyTotals> weeklyTotalsList) {
-        for (WeeklyTotals wt : weeklyTotalsList) {
-            if (wt.getEmployeeNumber().equals(employeeId) && wt.getWeekNumber() == weekNumber) {
-                updatePayPeriodDates(wt, date);
-                return wt;
-            }
-        }
-        WeeklyTotals newTotal = new WeeklyTotals(employeeId, employee.getLastName(), employee.getFirstName(), weekNumber, date, date, 0, 0);
-        weeklyTotalsList.add(newTotal);
-        return newTotal;
-    }
 
     // Updates the pay period start/end dates for a WeeklyTotals object
     private void updatePayPeriodDates(WeeklyTotals weeklyTotal, LocalDate date) {
