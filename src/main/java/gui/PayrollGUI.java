@@ -147,13 +147,14 @@ public class PayrollGUI extends JFrame {
                     double phone = selectedEmployee.getPhoneAllowance();
                     double clothing = selectedEmployee.getClothingAllowance();
                     double totalAllowances = rice + phone + clothing;
-                    double grossMonthlyPay = totalHours * selectedEmployee.getHourlyRate() + totalAllowances;
-                    double pagibig = governmentContributions.CalculatePagibig.computeFromWeekly(grossMonthlyPay / 4.0);
-                    double philhealth = governmentContributions.CalculatePhilhealth.computeFromWeekly(grossMonthlyPay / 4.0);
-                    double sss = governmentContributions.CalculateSss.computeFromWeekly(grossMonthlyPay / 4.0);
-                    double withholdingTax = governmentContributions.CalculateWithholdingTax.compute(grossMonthlyPay);
+                    double basicGrossMonthlyPay = totalHours * selectedEmployee.getHourlyRate();
+                    double grossMonthlyPay = basicGrossMonthlyPay + totalAllowances;
+                    double pagibig = governmentContributions.CalculatePagibig.computeFromWeekly(basicGrossMonthlyPay / 4.0);
+                    double philhealth = governmentContributions.CalculatePhilhealth.computeFromWeekly(basicGrossMonthlyPay / 4.0);
+                    double sss = governmentContributions.CalculateSss.computeFromWeekly(basicGrossMonthlyPay / 4.0);
+                    double withholdingTax = governmentContributions.CalculateWithholdingTax.compute(basicGrossMonthlyPay);
                     double totalDeductions = pagibig + philhealth + sss + withholdingTax;
-                    double netMonthlyPay = grossMonthlyPay - totalDeductions;
+                    double netMonthlyPay = basicGrossMonthlyPay - totalDeductions + totalAllowances;
                     JPanel monthPanel = new JPanel();
                     monthPanel.setLayout(new GridLayout(0, 2, 8, 2));
                     monthPanel.setBorder(BorderFactory.createCompoundBorder(

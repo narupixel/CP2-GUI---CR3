@@ -38,12 +38,15 @@ public class TimeLog {
     }
 
     private double calculateHoursWorked() {
-        Duration worked = Duration.between(logIn, logOut);
-        return worked.toMinutes() / 60.0;
+    Duration worked = Duration.between(logIn, logOut);
+    double hours = worked.toMinutes() / 60.0;
+    return Math.min(hours, 8.0); // Only up to 8 hours counted as regular
     }
 
     private double calculateOvertime() {
-        return Math.max(0, hoursWorked - 8.0);
+    Duration worked = Duration.between(logIn, logOut);
+    double hours = worked.toMinutes() / 60.0;
+    return Math.max(0, hours - 8.0); // Overtime is any hour above 8
     }
 
     private boolean isLateLogin() {
