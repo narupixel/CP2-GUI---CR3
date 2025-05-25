@@ -31,7 +31,7 @@ public class PayrollGUI extends JFrame {
         employees = LoadEmployeeData.loadFromFile("src/main/resources/Employee Details.tsv");
 
         setTitle("Payroll System");
-        setSize(600, 500);
+        setSize(700, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -116,9 +116,13 @@ public class PayrollGUI extends JFrame {
             JLabel bdayLabel = new JLabel("Birthday: " + birthday);
             bdayLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
             bdayLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            JLabel posLabel = new JLabel("Position: " + selectedEmployee.getPosition());
+            posLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+            posLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             empPanel.add(empNumLabel);
             empPanel.add(nameLabel);
             empPanel.add(bdayLabel);
+            empPanel.add(posLabel);
             empPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 0));
             resultsPanel.add(empPanel);
             resultsPanel.add(Box.createVerticalStrut(5));
@@ -144,9 +148,9 @@ public class PayrollGUI extends JFrame {
                     double clothing = selectedEmployee.getClothingAllowance();
                     double totalAllowances = rice + phone + clothing;
                     double grossMonthlyPay = totalHours * selectedEmployee.getHourlyRate() + totalAllowances;
-                    double pagibig = governmentContributions.CalculatePagibig.computeFromWeekly(grossMonthlyPay / 4.0) * 4.0;
-                    double philhealth = governmentContributions.CalculatePhilhealth.computeFromWeekly(grossMonthlyPay / 4.0) * 4.0;
-                    double sss = governmentContributions.CalculateSss.computeFromWeekly(grossMonthlyPay / 4.0) * 4.0;
+                    double pagibig = governmentContributions.CalculatePagibig.computeFromWeekly(grossMonthlyPay / 4.0);
+                    double philhealth = governmentContributions.CalculatePhilhealth.computeFromWeekly(grossMonthlyPay / 4.0);
+                    double sss = governmentContributions.CalculateSss.computeFromWeekly(grossMonthlyPay / 4.0);
                     double withholdingTax = governmentContributions.CalculateWithholdingTax.compute(grossMonthlyPay);
                     double totalDeductions = pagibig + philhealth + sss + withholdingTax;
                     double netMonthlyPay = grossMonthlyPay - totalDeductions;
@@ -167,6 +171,12 @@ public class PayrollGUI extends JFrame {
                     monthPanel.add(new JLabel(startDate + " to " + endDate));
                     monthPanel.add(new JLabel("Gross Monthly Pay:"));
                     monthPanel.add(new JLabel(String.format("%.2f", grossMonthlyPay)));
+                    monthPanel.add(new JLabel(""));
+                    monthPanel.add(new JLabel(""));
+                    JLabel allowanceLabel = new JLabel("Allowance");
+                    allowanceLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
+                    monthPanel.add(allowanceLabel);
+                    monthPanel.add(new JLabel(""));
                     monthPanel.add(new JLabel("Rice Subsidy:"));
                     monthPanel.add(new JLabel(String.format("%.2f", rice)));
                     monthPanel.add(new JLabel("Phone Allowance:"));
@@ -175,16 +185,24 @@ public class PayrollGUI extends JFrame {
                     monthPanel.add(new JLabel(String.format("%.2f", clothing)));
                     monthPanel.add(new JLabel("Total Allowances:"));
                     monthPanel.add(new JLabel(String.format("%.2f", totalAllowances)));
-                    monthPanel.add(new JLabel("Pag-IBIG:"));
+                    monthPanel.add(new JLabel(""));
+                    monthPanel.add(new JLabel(""));
+                    JLabel deductionsLabel = new JLabel("Deductions");
+                    deductionsLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
+                    monthPanel.add(deductionsLabel);
+                    monthPanel.add(new JLabel(""));
+                    monthPanel.add(new JLabel("Pag-IBIG Contribution:"));
                     monthPanel.add(new JLabel(String.format("%.2f", pagibig)));
-                    monthPanel.add(new JLabel("PhilHealth:"));
+                    monthPanel.add(new JLabel("PhilHealth Contribution:"));
                     monthPanel.add(new JLabel(String.format("%.2f", philhealth)));
-                    monthPanel.add(new JLabel("SSS:"));
+                    monthPanel.add(new JLabel("SSS Contribution:"));
                     monthPanel.add(new JLabel(String.format("%.2f", sss)));
                     monthPanel.add(new JLabel("Withholding Tax:"));
                     monthPanel.add(new JLabel(String.format("%.2f", withholdingTax)));
                     monthPanel.add(new JLabel("Total Deductions:"));
                     monthPanel.add(new JLabel(String.format("%.2f", totalDeductions)));
+                    monthPanel.add(new JLabel(""));
+                    monthPanel.add(new JLabel(""));
                     monthPanel.add(new JLabel("Total Hours Worked:"));
                     monthPanel.add(new JLabel(String.format("%.2f", totalHours)));
                     monthPanel.add(new JLabel("Total Overtime:"));

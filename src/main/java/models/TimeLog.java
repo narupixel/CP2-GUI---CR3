@@ -87,7 +87,7 @@ public class TimeLog {
     }
 
     public static void main(String[] args) {
-        String fileName = "C:\\Users\\paxan\\OneDrive\\Documents\\payroll-system\\src\\main\\resources\\Employee Attendance Record.tsv";
+        String fileName = "src/main/resources/Employee Attendance Record.tsv";
         String line;
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {

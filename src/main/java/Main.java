@@ -12,6 +12,7 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        gui.PayrollGUI.main(args);
         String employeeFile = "src/main/resources/Employee Details.tsv";
         String attendanceFile = "src/main/resources/Employee Attendance Record.tsv";
 

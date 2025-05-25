@@ -15,7 +15,7 @@ public class CalculateWithholdingTax {
      */
     public static double compute(double weeklyEarnings) {
         // Convert weekly earnings to monthly for tax bracket computation
-        double monthlyEarnings = weeklyEarnings * 4; // Approximate 4 weeks per month
+        double monthlyEarnings = weeklyEarnings; // Approximate 4 weeks per month
 
         double tax = 0.0;
         if (monthlyEarnings <= 20832) {
@@ -33,6 +33,6 @@ public class CalculateWithholdingTax {
         }
 
         // Convert monthly tax to weekly
-        return tax / 4.0;
+        return tax;
     }
 }

@@ -7,20 +7,19 @@ package governmentContributions;
 
 public class CalculatePhilhealth {
     // 2024 PhilHealth: 5% of monthly basic salary, min 400, max 5000 (employee share is half)
-    private static final double RATE = 0.05;
-    private static final double MIN_MONTHLY_CONTRIBUTION = 400.0;
-    private static final double MAX_MONTHLY_CONTRIBUTION = 5000.0;
-
     /**
-     * Calculates the PhilHealth employee share based on gross monthly pay.
-     * @param grossMonthlyPay The employee's gross monthly pay.
+     * Calculates the PhilHealth employee share based on gross monthly salary.
+     * @param totalMonthlyNetSalary The employee's gross monthly pay.
      * @return The employee's PhilHealth contribution (employee share).
      */
-    public static double compute(double grossMonthlyPay) {
-        double totalContribution = grossMonthlyPay * RATE;
-        totalContribution = Math.max(totalContribution, MIN_MONTHLY_CONTRIBUTION);
-        totalContribution = Math.min(totalContribution, MAX_MONTHLY_CONTRIBUTION);
-        return totalContribution / 2.0; // Employee share
+    public static double calculatePhilHealth(double totalMonthlyNetSalary) {
+        if (totalMonthlyNetSalary <= 10000) {
+            return 300.00; // Minimum PhilHealth contribution
+        } else if (totalMonthlyNetSalary <= 59999.99) {
+            return totalMonthlyNetSalary * 0.03 / 2; // 3% of salary, split between employer & employee
+        } else {
+            return 1800.00 / 2; // Maximum PhilHealth contribution
+        }
     }
 
     /**
@@ -30,6 +29,8 @@ public class CalculatePhilhealth {
      */
     public static double computeFromWeekly(double grossWeeklyPay) {
         double grossMonthlyPay = grossWeeklyPay * 4; // Approximate 4 weeks per month
-        return compute(grossMonthlyPay);
+        return calculatePhilHealth(grossMonthlyPay);
+        
     }
+    
 }
