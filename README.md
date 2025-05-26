@@ -1,6 +1,6 @@
 # Payroll System Project
 
-This project is a payroll system developed in Java that includes a graphical user interface (GUI) for managing employee information and calculating salaries. The system allows users to input employee details, track hours worked, and compute gross and net weekly salaries after deductions.
+This project is a payroll system developed in Java that includes a graphical user interface (GUI) for managing employee information and calculating monthly salaries. The system allows users to search for employees by their employee number, select a month and year, and view detailed payroll information including hours worked, allowances, government-mandated contributions, and net pay.
 
 ## Project Structure
 
@@ -11,27 +11,49 @@ payroll-system
 ├── src
 │   ├── main
 │   │   ├── java
-│   │   │   ├── Main.java               # Entry point of the application
+│   │   │   ├── Main.java                            # Alternative entry point
+│   │   │   ├── dataLoader
+│   │   │   │   ├── LoadEmployeeData.java            # Loads employee profiles
+│   │   │   │   └── LoadTimeSheet.java               # Loads time logs for employees
+│   │   │   ├── governmentContributions
+│   │   │   │   ├── CalculatePagibig.java            # Pag-IBIG contribution calculations
+│   │   │   │   ├── CalculatePhilhealth.java         # PhilHealth contribution calculations
+│   │   │   │   ├── CalculateSss.java                # SSS contribution calculations
+│   │   │   │   └── CalculateWithholdingTax.java     # Tax withholding calculations
 │   │   │   ├── gui
-│   │   │   │   └── PayrollGUI.java     # GUI components for the payroll system
-│   │   │   ├── model
-│   │   │   │   └── Employee.java        # Employee class definition
-│   │   │   ├── service
-│   │   │   │   └── PayrollCalculator.java # Payroll calculation logic
-│   │   │   └── util
-│   │   │       └── SalaryUtils.java     # Utility methods for salary calculations
+│   │   │   │   └── PayrollGUI.java                  # Main GUI for the payroll system
+│   │   │   ├── models
+│   │   │   │   ├── EmployeeProfile.java             # Employee data model
+│   │   │   │   ├── TimeLog.java                     # Attendance record model
+│   │   │   │   └── WeeklyTotals.java                # Weekly aggregation model
+│   │   │   ├── payrollCalculations
+│   │   │   │   ├── CalculateAndDisplay.java         # Payroll calculation and display logic
+│   │   │   │   ├── CalculateOvertimePay.java        # Overtime calculation utilities
+│   │   │   │   ├── CalculateWeeklyAllowances.java   # Allowance calculation utilities
+│   │   │   │   └── CalculateWeeklyTotals.java       # Weekly totals calculation
+│   │   │   └── ui
+│   │   │       └── ConsoleUI.java                   # Alternative console interface
 │   │   └── resources
-│   │       └── config.properties         # Configuration settings for the payroll system
-├── .gitignore                             # Files and directories to ignore in version control
-└── README.md                              # Documentation for the project
+│   │       ├── Employee Attendance Record.tsv       # Employee time log data
+│   │       ├── Employee Details.tsv                 # Employee personal and salary information
+│   │       ├── Pag-ibig Contribution.tsv            # Pag-IBIG contribution rates
+│   │       ├── Philhealth Contribution.tsv          # PhilHealth contribution rates
+│   │       ├── SSS Contribution Schedule.tsv        # SSS contribution rates
+│   │       └── Witholding Tax.tsv                   # Tax withholding rates
+└── README.md                                        # Documentation for the project
 ```
 
 ## Features
 
-- **Employee Management**: Input and display employee information including employee number, name, and birthday.
-- **Salary Calculations**: Calculate gross weekly salary, net weekly salary after deductions, and allowances.
-- **Time Tracking**: Input hours worked and compute total hours for payroll processing.
-- **Configuration Management**: Use a properties file to manage configuration settings such as deduction rates and allowance amounts.
+- **Employee Search**: Search for employees by their employee number.
+- **Date Selection**: Select month and year for payroll calculation.
+- **Detailed Payroll Information**:
+  - Basic employee details (name, ID, birthday)
+  - Total hours worked in the selected month
+  - Overtime hours calculation
+  - Allowances (rice subsidy, phone allowance, clothing allowance)
+  - Government-mandated contributions (Pag-IBIG, PhilHealth, SSS, withholding tax)
+  - Gross and net monthly pay calculation
 
 ## Setup Instructions
 
@@ -42,18 +64,30 @@ payroll-system
    ```
 
 2. **Build the Project**: 
-   Use your preferred Java build tool (e.g., Maven, Gradle) to build the project.
+   Use Maven to build the project:
+   ```bash
+   mvn clean install
+   ```
 
 3. **Run the Application**: 
-   Execute the `Main.java` file to start the payroll system.
+   Execute the PayrollGUI class to start the payroll system with the graphical interface:
+   ```bash
+   java -cp target/classes gui.PayrollGUI
+   ```
 
 ## Usage Guidelines
 
-- Launch the application to access the GUI.
-- Enter employee details and hours worked in the provided fields.
-- Click on the calculate button to compute salaries and view results.
+1. **Launch the application** to access the GUI.
+2. **Enter an employee number** in the search field (e.g., 10001, 10002).
+3. **Select a month and year** from the dropdown menus.
+4. **Click the Calculate button** or press Enter while in the Employee search field to compute and display payroll information.
+5. **View the results** in the scrollable panel that appears below the search area.
 
-## Additional Notes
+## Resource Files
 
-- Ensure that the `config.properties` file is properly configured with the necessary deduction rates and allowances before running the application.
-- This project is designed to be extensible; feel free to add more features or modify existing ones as needed.
+The system relies on several TSV (Tab-Separated Values) files in the resources directory:
+- `Employee Details.tsv`: Contains basic employee information and pay rates
+- `Employee Attendance Record.tsv`: Contains the attendance records and hours worked
+- `Pag-ibig Contribution.tsv`, `Philhealth Contribution.tsv`, `SSS Contribution Schedule.tsv`, and `Witholding Tax.tsv`: Contain the contribution rates for various government-mandated deductions
+
+Ensure these files are present in the resources directory before running the application.
