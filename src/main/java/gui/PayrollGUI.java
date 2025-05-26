@@ -130,13 +130,26 @@ public class PayrollGUI extends JFrame {
             int year = (Integer) yearCombo.getSelectedItem();
             LocalDate startDate = LocalDate.of(year, monthIdx, 1);
             LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-            try {
-                List<TimeLog> logs = LoadTimeSheet.loadForEmployee(attendanceFile, selectedEmployee.getEmployeeNumber());
+            try {                List<TimeLog> logs = LoadTimeSheet.loadForEmployee(attendanceFile, selectedEmployee.getEmployeeNumber());
+                // Check if there are any records for the selected year
+                LocalDate yearStart = LocalDate.of(year, 1, 1);
+                LocalDate yearEnd = LocalDate.of(year, 12, 31);
+                List<TimeLog> yearLogs = logs.stream()
+                        .filter(log -> !log.getDate().isBefore(yearStart) && !log.getDate().isAfter(yearEnd))
+                        .toList();
+                  // Filter for just the selected month
                 List<TimeLog> filteredLogs = logs.stream()
                         .filter(log -> !log.getDate().isBefore(startDate) && !log.getDate().isAfter(endDate))
                         .toList();
-                if (filteredLogs.isEmpty()) {
-                    JLabel noRecords = new JLabel("No attendance records found for this employee in the selected month.");
+                  if (filteredLogs.isEmpty()) {
+                    JLabel noRecords;
+                    if (yearLogs.isEmpty()) {
+                        // Case 3: No records for month AND year
+                        noRecords = new JLabel("No attendance records found for this employee in the selected year.");
+                    } else {
+                        // Case 1: No records for month but records exist for year
+                        noRecords = new JLabel("No attendance records found for this employee in the selected month.");
+                    }
                     noRecords.setForeground(Color.RED);
                     resultsPanel.add(noRecords);
                 } else {
@@ -206,7 +219,7 @@ public class PayrollGUI extends JFrame {
                     monthPanel.add(new JLabel(""));
                     monthPanel.add(new JLabel("Total Hours Worked:"));
                     monthPanel.add(new JLabel(String.format("%.2f", totalHours)));
-                    monthPanel.add(new JLabel("Total Overtime:"));
+                    monthPanel.add(new JLabel("Total Overtime Hours:"));
                     monthPanel.add(new JLabel(String.format("%.2f", totalOvertime)));
                     JLabel netPayLabel = new JLabel("NET MONTHLY PAY:");
                     netPayLabel.setFont(boldFont);
