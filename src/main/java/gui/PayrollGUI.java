@@ -40,6 +40,10 @@ public class PayrollGUI extends JFrame {
         searchPanel.add(new JLabel("Employee Number:"));
         employeeNumberField = new JTextField(10);
         searchPanel.add(employeeNumberField);
+
+        // Add Enter key listener to trigger the Calculate button
+        employeeNumberField.addActionListener(e -> calculateButton.doClick());
+
         // Month dropdown
         String[] months = java.util.Arrays.stream(java.time.Month.values())
             .map(m -> String.format("%02d - %s", m.getValue(), m.name().substring(0,1) + m.name().substring(1).toLowerCase()))
