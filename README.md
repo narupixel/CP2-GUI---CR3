@@ -64,10 +64,7 @@ payroll-system
    ```
 
 2. **Build the Project**: 
-   Use Maven to build the project:
-   ```bash
-   mvn clean install
-   ```
+   Use your preferred Java build tool (e.g., Maven, Gradle) to build the project.
 
 3. **Run the Application**: 
    Execute the PayrollGUI class to start the payroll system with the graphical interface:
