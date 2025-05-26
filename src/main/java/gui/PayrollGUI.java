@@ -106,8 +106,7 @@ public class PayrollGUI extends JFrame {
             JPanel empPanel = new JPanel();
             empPanel.setLayout(new BoxLayout(empPanel, BoxLayout.Y_AXIS));
             empPanel.setBackground(Color.WHITE);
-            empPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            JLabel empNumLabel = new JLabel("Employee Number: " + selectedEmployee.getEmployeeNumber());
+            empPanel.setAlignmentX(Component.LEFT_ALIGNMENT);            JLabel empNumLabel = new JLabel("Employee Number: " + selectedEmployee.getEmployeeNumber());
             empNumLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
             empNumLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             JLabel nameLabel = new JLabel("Name: " + selectedEmployee.getFirstName() + " " + selectedEmployee.getLastName());
@@ -116,13 +115,9 @@ public class PayrollGUI extends JFrame {
             JLabel bdayLabel = new JLabel("Birthday: " + birthday);
             bdayLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
             bdayLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            JLabel posLabel = new JLabel("Position: " + selectedEmployee.getPosition());
-            posLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
-            posLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             empPanel.add(empNumLabel);
             empPanel.add(nameLabel);
             empPanel.add(bdayLabel);
-            empPanel.add(posLabel);
             empPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 0));
             resultsPanel.add(empPanel);
             resultsPanel.add(Box.createVerticalStrut(5));
