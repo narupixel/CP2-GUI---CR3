@@ -6,6 +6,7 @@ import dataLoader.LoadTimeSheet;
 import governmentContributions.*;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;  // Add this import
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -42,7 +43,7 @@ public class EmployeeDetailGUI extends JDialog {
     /**
      * Reference to the parent window for proper modal behavior.
      */
-    private final EmployeeListGUI parentWindow;
+    private final PayrollGUI parentWindow;
     
     /**
      * The employee whose details are being displayed.
@@ -69,24 +70,89 @@ public class EmployeeDetailGUI extends JDialog {
      * month selection for salary computation within the same frame.
      * 
      * @param employee The employee whose details should be displayed
-     * @param parentWindow Reference to the parent EmployeeListGUI window
+     * @param parentWindow Reference to the parent PayrollGUI window for proper modal behavior
      */
-    public EmployeeDetailGUI(EmployeeProfile employee, EmployeeListGUI parentWindow) {
+    public EmployeeDetailGUI(EmployeeProfile employee, PayrollGUI parentWindow) {
         super(parentWindow, "Employee Details & Salary Computation - " + employee.getFirstName() + " " + employee.getLastName(), true);
         this.employee = employee;
         this.parentWindow = parentWindow;
         
-        // Configure the dialog properties for optimal display
-        setSize(600, 700); // Increased size to accommodate salary computation
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(parentWindow); // Center relative to parent window
-        setLayout(new BorderLayout());
-        setResizable(true); // Allow resizing for better usability
+        // Initialize components and setup the dialog
+        initializeComponents();
+        setupEventHandlers();
+        layoutComponents();
         
-        // Create and add all components
-        createEmployeeInfoPanel();
-        createSalaryComputationPanel();
-        createButtonPanel();
+        // Configure dialog properties
+        setSize(800, 700);
+        setLocationRelativeTo(parentWindow);
+        setResizable(true);
+    }
+
+    /**
+     * Initializes all GUI components for the employee details dialog.
+     * This method sets up the employee information display, salary computation controls,
+     * and results panel with proper configuration and styling.
+     */
+    private void initializeComponents() {
+        // Initialize the salary results panel first (even though it starts empty)
+        salaryResultsPanel = new JPanel();
+        salaryResultsPanel.setLayout(new BoxLayout(salaryResultsPanel, BoxLayout.Y_AXIS));
+        salaryResultsPanel.setBackground(Color.WHITE);
+        salaryResultsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Create scroll pane for salary results (initially empty)
+        salaryScrollPane = new JScrollPane(salaryResultsPanel);
+        salaryScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        salaryScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        salaryScrollPane.setPreferredSize(new Dimension(750, 300));
+        salaryScrollPane.setBorder(BorderFactory.createTitledBorder("Salary Calculation Results"));
+
+        // Add a placeholder message in the results panel
+        JLabel placeholderLabel = new JLabel("Select a month and click 'Compute Salary' to see results");
+        placeholderLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        placeholderLabel.setForeground(Color.GRAY);
+        salaryResultsPanel.add(placeholderLabel);
+    }
+
+    /**
+     * Sets up the event handlers for user interactions.
+     */
+    private void setupEventHandlers() {
+        // Create the Compute Salary button
+        computeSalaryButton = new JButton("Compute Salary");
+        computeSalaryButton.setPreferredSize(new Dimension(140, 30));
+        computeSalaryButton.setToolTipText("Calculate salary for the selected month and year");
+        computeSalaryButton.addActionListener(e -> computeSalaryForSelectedMonth());
+    }
+
+    /**
+     * Organizes and positions all GUI components within the dialog using
+     * appropriate layout managers for optimal user experience and visual appeal.
+     */
+    private void layoutComponents() {
+        setLayout(new BorderLayout());
+
+        // Create and add the employee information panel at the top
+        JPanel employeeInfoPanel = createEmployeeInfoPanel();
+        add(employeeInfoPanel, BorderLayout.NORTH);
+
+        // Create and add the salary computation panel in the center-top
+        JPanel computationPanel = createSalaryComputationPanel();
+        
+        // Create a wrapper panel for the computation controls
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.add(computationPanel, BorderLayout.NORTH);
+        centerPanel.add(salaryScrollPane, BorderLayout.CENTER);
+        
+        add(centerPanel, BorderLayout.CENTER);
+
+        // Add buttons panel at the bottom
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> dispose());
+        buttonPanel.add(closeButton);
+        
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     /**
@@ -94,7 +160,7 @@ public class EmployeeDetailGUI extends JDialog {
      * specified in the change request. The panel uses a clean grid layout to
      * present the seven required fields in a professional, easy-to-read format.
      */
-    private void createEmployeeInfoPanel() {
+    private JPanel createEmployeeInfoPanel() {
         JPanel infoPanel = new JPanel(new GridBagLayout());
         infoPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createTitledBorder("Employee Information"),
@@ -187,84 +253,48 @@ public class EmployeeDetailGUI extends JDialog {
         pagibigValue.setFont(valueFont);
         infoPanel.add(pagibigValue, gbc);
         
-        // Add the information panel to the top of the dialog
-        add(infoPanel, BorderLayout.NORTH);
+        return infoPanel;
     }
 
     /**
-     * Creates the salary computation panel that prompts the user to select a month
-     * for salary calculation. This panel includes month/year selection dropdowns,
-     * a compute button, and a results area for displaying the calculated salary.
+     * Creates the salary computation panel with month/year selection and compute button.
+     * This panel allows users to select a specific month and year for salary calculation
+     * and displays the compute button to trigger the payroll calculation process.
      */
-    private void createSalaryComputationPanel() {
-        JPanel mainComputationPanel = new JPanel(new BorderLayout());
-        mainComputationPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder("Salary Computation"),
-            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+    private JPanel createSalaryComputationPanel() {
+        // Create the main panel for salary computation controls
+        JPanel computationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        computationPanel.setBackground(Color.WHITE);
+        computationPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(), 
+            "Salary Computation", 
+            TitledBorder.LEFT, 
+            TitledBorder.TOP
         ));
-        mainComputationPanel.setBackground(Color.WHITE);
 
-        // Create the month selection panel
-        JPanel selectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        selectionPanel.setBackground(Color.WHITE);
-        selectionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Create month dropdown with formatted month names
-        String[] months = java.util.Arrays.stream(java.time.Month.values())
-            .map(m -> String.format("%02d - %s", m.getValue(), 
-                m.name().substring(0,1) + m.name().substring(1).toLowerCase()))
-            .toArray(String[]::new);
+        // Create and configure the month selection combo box
+        String[] months = {
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        };
         monthCombo = new JComboBox<>(months);
-        monthCombo.setSelectedIndex(java.time.LocalDate.now().getMonthValue() - 1); // Default to current month
-        
-        selectionPanel.add(new JLabel("Select Month:"));
-        selectionPanel.add(monthCombo);
-        
-        // Create year dropdown
-        int currentYear = java.time.Year.now().getValue();
-        Integer[] years = new Integer[11]; // Current year plus/minus 5 years
-        for (int i = 0; i < 11; i++) {
-            years[i] = currentYear - 5 + i;
-        }
-        yearCombo = new JComboBox<>(years);
-        yearCombo.setSelectedItem(currentYear); // Default to current year
-        
-        selectionPanel.add(new JLabel("Year:"));
-        selectionPanel.add(yearCombo);
-        
-        // Create the Compute Salary button
-        computeSalaryButton = new JButton("Compute Salary");
-        computeSalaryButton.setPreferredSize(new Dimension(140, 30));
-        computeSalaryButton.setToolTipText("Calculate salary for the selected month and year");
-        computeSalaryButton.addActionListener(e -> computeSalaryForSelectedMonth());
-        
-        selectionPanel.add(Box.createHorizontalStrut(20));
-        selectionPanel.add(computeSalaryButton);
+        monthCombo.setPreferredSize(new Dimension(120, 30));
+        monthCombo.setSelectedIndex(0); // Default to January
 
-        // Create the results panel for displaying salary computation
-        salaryResultsPanel = new JPanel();
-        salaryResultsPanel.setLayout(new BoxLayout(salaryResultsPanel, BoxLayout.Y_AXIS));
-        salaryResultsPanel.setBackground(Color.WHITE);
-        
-        // Add initial prompt message
-        JLabel promptLabel = new JLabel("Select a month and click 'Compute Salary' to view detailed salary breakdown.");
-        promptLabel.setFont(new Font("SansSerif", Font.ITALIC, 12));
-        promptLabel.setForeground(Color.GRAY);
-        promptLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        salaryResultsPanel.add(Box.createVerticalStrut(20));
-        salaryResultsPanel.add(promptLabel);
-        
-        // Add scroll pane for salary results
-        salaryScrollPane = new JScrollPane(salaryResultsPanel);
-        salaryScrollPane.setPreferredSize(new Dimension(550, 300));
-        salaryScrollPane.setBorder(BorderFactory.createLoweredBevelBorder());
-        
-        // Add components to the main computation panel
-        mainComputationPanel.add(selectionPanel, BorderLayout.NORTH);
-        mainComputationPanel.add(salaryScrollPane, BorderLayout.CENTER);
-        
-        // Add the computation panel to the center of the dialog
-        add(mainComputationPanel, BorderLayout.CENTER);
+        // Create and configure the year selection combo box
+        Integer[] years = {2022, 2023, 2024, 2025, 2026};
+        yearCombo = new JComboBox<>(years);
+        yearCombo.setPreferredSize(new Dimension(80, 30));
+        yearCombo.setSelectedIndex(2); // Default to 2024
+
+        // Add labels and components to the panel
+        computationPanel.add(new JLabel("Month:"));
+        computationPanel.add(monthCombo);
+        computationPanel.add(new JLabel("Year:"));
+        computationPanel.add(yearCombo);
+        computationPanel.add(computeSalaryButton);
+
+        return computationPanel;
     }
 
     /**
@@ -330,11 +360,11 @@ public class EmployeeDetailGUI extends JDialog {
                 double clothing = employee.getClothingAllowance();
                 double totalAllowances = rice + phone + clothing;
                 
-                // Calculate gross pay
+                // Calculate gross pay components
                 double basicGrossMonthlyPay = totalHours * employee.getHourlyRate();
-                double grossMonthlyPay = basicGrossMonthlyPay + totalAllowances;
+                double grossMonthlyPay = basicGrossMonthlyPay + totalAllowances; // Total gross including allowances
                 
-                // Calculate government contributions
+                // Calculate government contributions (based on basic pay only, not including allowances)
                 double pagibig = CalculatePagibig.computeFromWeekly(basicGrossMonthlyPay / 4.0);
                 double philhealth = CalculatePhilhealth.computeFromWeekly(basicGrossMonthlyPay / 4.0);
                 double sss = CalculateSss.computeFromWeekly(basicGrossMonthlyPay / 4.0);
@@ -342,7 +372,7 @@ public class EmployeeDetailGUI extends JDialog {
                 
                 // Calculate final amounts
                 double totalDeductions = pagibig + philhealth + sss + withholdingTax;
-                double netMonthlyPay = basicGrossMonthlyPay - totalDeductions + totalAllowances;
+                double netMonthlyPay = grossMonthlyPay - totalDeductions; // Use grossMonthlyPay here
 
                 // Create the detailed salary breakdown panel
                 createSalaryBreakdownPanel(startDate, endDate, totalHours, totalOvertime, 
@@ -401,7 +431,6 @@ private void createSalaryBreakdownPanel(LocalDate startDate, LocalDate endDate,
     // Define fonts
     Font boldFont = new Font("SansSerif", Font.BOLD, 12);
     Font sectionFont = new Font("SansSerif", Font.BOLD, 11);
-    Font regularFont = new Font("SansSerif", Font.PLAIN, 11);
 
     // Period
     JLabel periodLabel = new JLabel("Period:");
@@ -495,7 +524,7 @@ private void createSalaryBreakdownPanel(LocalDate startDate, LocalDate endDate,
     /**
      * Creates the button panel containing the Close button for dialog navigation.
      */
-    private void createButtonPanel() {
+    private JPanel createButtonPanel() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -520,7 +549,6 @@ private void createSalaryBreakdownPanel(LocalDate startDate, LocalDate endDate,
         
         buttonPanel.add(closeButton);
         
-        // Add the button panel to the bottom of the dialog
-        add(buttonPanel, BorderLayout.SOUTH);
+        return buttonPanel;
     }
 }

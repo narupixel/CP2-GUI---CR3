@@ -41,7 +41,7 @@ import java.util.List;
 public class NewEmployeeGUI extends JDialog {
     
     // Reference to the parent window for refreshing the employee list
-    private final EmployeeListGUI parentWindow;
+    private final PayrollGUI parentWindow;
     
     // Form input fields for employee information
     private JTextField employeeNumberField;
@@ -64,38 +64,83 @@ public class NewEmployeeGUI extends JDialog {
      * This method sets up the modal dialog, creates the form fields, generates the next
      * available employee number, and configures all user interface elements.
      * 
-     * @param parentWindow Reference to the EmployeeListGUI that opened this dialog,
+     * @param parentWindow Reference to the PayrollGUI that opened this dialog,
      *                    used for refreshing the employee list after successful addition
      */
-    public NewEmployeeGUI(EmployeeListGUI parentWindow) {
+    public NewEmployeeGUI(PayrollGUI parentWindow) {
         super(parentWindow, "Add New Employee", true); // Create modal dialog
         this.parentWindow = parentWindow;
         
-        // Configure the dialog properties
-        setSize(600, 450);
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Proper disposal for dialogs
-        setLocationRelativeTo(parentWindow); // Center relative to parent window
-        setLayout(new BorderLayout());
-        setResizable(false); // Prevent resizing for consistent layout
+        // Initialize components and setup the dialog
+        initializeComponents();
+        setupEventHandlers();
+        layoutComponents();
         
-        // Create and add all form components
-        createFormPanel();
-        createButtonPanel();
-        
-        // Generate and display the next available employee number
-        generateNextEmployeeNumber();
-        
-        // Set focus to the first editable field
-        SwingUtilities.invokeLater(() -> lastNameField.requestFocus());
+        // Configure dialog properties  
+        setSize(500, 400);
+        setLocationRelativeTo(parentWindow);
+        setResizable(false);
     }
 
     /**
-     * Creates the main form panel containing all input fields for employee information.
-     * The form uses a GridBagLayout for precise control over field placement and sizing.
-     * All fields except Employee Number are editable, with Employee Number being
-     * automatically generated and displayed as read-only.
+     * Initializes all UI components for the New Employee dialog.
+     * This method creates the form fields, labels, and buttons used in the dialog,
+     * setting up their properties and default values as needed.
      */
-    private void createFormPanel() {
+    private void initializeComponents() {
+        // Form input fields
+        employeeNumberField = new JTextField(20);
+        lastNameField = new JTextField(20);
+        firstNameField = new JTextField(20);
+        sssNumberField = new JTextField(20);
+        philhealthNumberField = new JTextField(20);
+        tinNumberField = new JTextField(20);
+        pagibigNumberField = new JTextField(20);
+        
+        // Control buttons
+        saveButton = new JButton("Save Employee");
+        cancelButton = new JButton("Cancel");
+        
+        // Configure employee number field (read-only)
+        employeeNumberField.setEditable(false);
+        employeeNumberField.setBackground(new Color(240, 240, 240));
+    }
+
+    /**
+     * Sets up event handlers for user interactions with the dialog.
+     * This method configures action listeners for the Save and Cancel buttons,
+     * as well as keyboard shortcuts for improved user experience.
+     */
+    private void setupEventHandlers() {
+        // Save button - validates and saves the new employee
+        saveButton.addActionListener(this::saveEmployee);
+        
+        // Cancel button - closes the dialog without saving
+        cancelButton.addActionListener(e -> dispose());
+        
+        // Add keyboard shortcuts
+        getRootPane().setDefaultButton(saveButton); // Enter key triggers save
+        
+        // Add Escape key binding for cancel
+        KeyStroke escapeKeyStroke = KeyStroke.getKeyStroke("ESCAPE");
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(escapeKeyStroke, "CANCEL");
+        getRootPane().getActionMap().put("CANCEL", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
+        });
+    }
+
+    /**
+     * Lays out all components in the dialog using appropriate layout managers.
+     * This method arranges the form fields and buttons in a user-friendly
+     * manner, ensuring proper alignment, spacing, and grouping of related elements.
+     */
+    private void layoutComponents() {
+        setLayout(new BorderLayout());
+        
+        // Create and add form panel
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createTitledBorder("Employee Information"),
@@ -118,11 +163,8 @@ public class NewEmployeeGUI extends JDialog {
         formPanel.add(empNumLabel, gbc);
         
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        employeeNumberField = new JTextField(20);
         employeeNumberField.setFont(fieldFont);
         employeeNumberField.setPreferredSize(new Dimension(250, 25));
-        employeeNumberField.setEditable(false); // Read-only since it's auto-generated
-        employeeNumberField.setBackground(new Color(240, 240, 240)); // Gray background to indicate read-only
         formPanel.add(employeeNumberField, gbc);
         
         // Last Name field (required)
@@ -132,7 +174,6 @@ public class NewEmployeeGUI extends JDialog {
         formPanel.add(lastNameLabel, gbc);
         
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        lastNameField = new JTextField(20);
         lastNameField.setFont(fieldFont);
         lastNameField.setPreferredSize(new Dimension(250, 25));
         formPanel.add(lastNameField, gbc);
@@ -144,7 +185,6 @@ public class NewEmployeeGUI extends JDialog {
         formPanel.add(firstNameLabel, gbc);
         
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        firstNameField = new JTextField(20);
         firstNameField.setFont(fieldFont);
         firstNameField.setPreferredSize(new Dimension(250, 25));
         formPanel.add(firstNameField, gbc);
@@ -156,7 +196,6 @@ public class NewEmployeeGUI extends JDialog {
         formPanel.add(sssLabel, gbc);
         
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        sssNumberField = new JTextField(20);
         sssNumberField.setFont(fieldFont);
         sssNumberField.setPreferredSize(new Dimension(250, 25));
         formPanel.add(sssNumberField, gbc);
@@ -168,7 +207,6 @@ public class NewEmployeeGUI extends JDialog {
         formPanel.add(philhealthLabel, gbc);
         
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        philhealthNumberField = new JTextField(20);
         philhealthNumberField.setFont(fieldFont);
         philhealthNumberField.setPreferredSize(new Dimension(250, 25));
         formPanel.add(philhealthNumberField, gbc);
@@ -180,7 +218,6 @@ public class NewEmployeeGUI extends JDialog {
         formPanel.add(tinLabel, gbc);
         
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        tinNumberField = new JTextField(20);
         tinNumberField.setFont(fieldFont);
         tinNumberField.setPreferredSize(new Dimension(250, 25));
         formPanel.add(tinNumberField, gbc);
@@ -192,7 +229,6 @@ public class NewEmployeeGUI extends JDialog {
         formPanel.add(pagibigLabel, gbc);
         
         gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        pagibigNumberField = new JTextField(20);
         pagibigNumberField.setFont(fieldFont);
         pagibigNumberField.setPreferredSize(new Dimension(250, 25));
         formPanel.add(pagibigNumberField, gbc);
@@ -206,40 +242,10 @@ public class NewEmployeeGUI extends JDialog {
         formPanel.add(noteLabel, gbc);
         
         add(formPanel, BorderLayout.CENTER);
-    }
-
-    /**
-     * Creates the button panel containing Save and Cancel buttons.
-     * The buttons are arranged in a flow layout for intuitive user interaction.
-     * The Save button triggers form validation and data saving, while Cancel
-     * closes the dialog without saving any changes.
-     */
-    private void createButtonPanel() {
+        
+        // Create and add button panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.setBackground(Color.WHITE);
-        
-        // Save button - validates and saves the new employee
-        saveButton = new JButton("Save Employee");
-        saveButton.setPreferredSize(new Dimension(130, 30));
-        saveButton.addActionListener(this::saveEmployee);
-        
-        // Cancel button - closes the dialog without saving
-        cancelButton = new JButton("Cancel");
-        cancelButton.setPreferredSize(new Dimension(100, 30));
-        cancelButton.addActionListener(e -> dispose()); // Simple dispose for proper modal behavior
-        
-        // Add keyboard shortcuts
-        getRootPane().setDefaultButton(saveButton); // Enter key triggers save
-        
-        // Add Escape key binding for cancel
-        KeyStroke escapeKeyStroke = KeyStroke.getKeyStroke("ESCAPE");
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(escapeKeyStroke, "CANCEL");
-        getRootPane().getActionMap().put("CANCEL", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dispose();
-            }
-        });
         
         buttonPanel.add(saveButton);
         buttonPanel.add(cancelButton);
@@ -313,7 +319,7 @@ public class NewEmployeeGUI extends JDialog {
                 JOptionPane.INFORMATION_MESSAGE);
             
             // Refresh the parent window's employee list
-            parentWindow.refreshEmployeeList();
+            parentWindow.refreshEmployeeData();
             
             // Close this dialog after successful save
             dispose();
