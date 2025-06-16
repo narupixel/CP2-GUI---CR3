@@ -76,6 +76,9 @@ public class NewEmployeeGUI extends JDialog {
         setupEventHandlers();
         layoutComponents();
         
+        // Generate the next employee number after components are initialized
+        generateNextEmployeeNumber();
+        
         // Configure dialog properties  
         setSize(500, 400);
         setLocationRelativeTo(parentWindow);
@@ -101,9 +104,16 @@ public class NewEmployeeGUI extends JDialog {
         saveButton = new JButton("Save Employee");
         cancelButton = new JButton("Cancel");
         
-        // Configure employee number field (read-only)
-        employeeNumberField.setEditable(false);
-        employeeNumberField.setBackground(new Color(240, 240, 240));
+        // Configure employee number field (editable with distinctive styling)
+        employeeNumberField.setEditable(true);
+        employeeNumberField.setBackground(new Color(255, 255, 240)); // Light yellow background to indicate auto-generated
+        employeeNumberField.setToolTipText("Auto-generated employee number - you can modify if needed");
+        
+        // Add a subtle border to make it clear it's editable but special
+        employeeNumberField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 150), 1),
+            BorderFactory.createEmptyBorder(2, 4, 2, 4)
+        ));
     }
 
     /**
@@ -319,7 +329,8 @@ public class NewEmployeeGUI extends JDialog {
                 JOptionPane.INFORMATION_MESSAGE);
             
             // Refresh the parent window's employee list
-            parentWindow.refreshEmployeeData();
+            String newEmployeeNumber = employeeNumberField.getText().trim(); // Get the generated employee number
+            parentWindow.refreshEmployeeDataAndSelect(newEmployeeNumber);
             
             // Close this dialog after successful save
             dispose();
@@ -341,12 +352,41 @@ public class NewEmployeeGUI extends JDialog {
 
     /**
      * Validates all required form fields to ensure data completeness and basic format compliance.
-     * This method checks each required field for empty values and provides specific
-     * error messages to guide the user in correcting any issues.
+     * This method checks each required field for empty values, validates the employee number
+     * for uniqueness and proper format, and provides specific error messages to guide the user.
      * 
-     * @return true if all validations pass, false if any required field is empty
+     * @return true if all validations pass, false if any required field is empty or invalid
      */
     private boolean validateFields() {
+        // Check Employee Number field
+        if (employeeNumberField.getText().trim().isEmpty()) {
+            showValidationError("Employee Number is required.");
+            employeeNumberField.requestFocus();
+            return false;
+        }
+        
+        // Validate employee number format (should be numeric and reasonable length)
+        String empNumber = employeeNumberField.getText().trim();
+        try {
+            int number = Integer.parseInt(empNumber);
+            if (number <= 0) {
+                showValidationError("Employee Number must be a positive number.");
+                employeeNumberField.requestFocus();
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            showValidationError("Employee Number must be a valid number.");
+            employeeNumberField.requestFocus();
+            return false;
+        }
+        
+        // Check for duplicate employee number
+        if (isEmployeeNumberExists(empNumber)) {
+            showValidationError("Employee Number " + empNumber + " already exists. Please choose a different number.");
+            employeeNumberField.requestFocus();
+            return false;
+        }
+        
         // Check Last Name field
         if (lastNameField.getText().trim().isEmpty()) {
             showValidationError("Last Name is required.");
@@ -467,5 +507,28 @@ public class NewEmployeeGUI extends JDialog {
             writer.flush(); // Ensure data is written to disk immediately
         }
         // FileWriter is automatically closed by try-with-resources
+    }
+
+    /**
+     * Checks if the given employee number already exists in the system.
+     * This method prevents duplicate employee numbers which could cause data integrity issues.
+     * 
+     * @param employeeNumber The employee number to check for existence
+     * @return true if the employee number already exists, false otherwise
+     */
+    private boolean isEmployeeNumberExists(String employeeNumber) {
+        try {
+            // Load all existing employee records from the TSV file
+            List<EmployeeProfile> employees = LoadEmployeeData.loadFromFile(employeeFile);
+            
+            // Check if any employee has the same number
+            return employees.stream()
+                .anyMatch(emp -> emp.getEmployeeNumber().equals(employeeNumber));
+                
+        } catch (Exception e) {
+            // If we can't load employees, assume it doesn't exist to allow the save to proceed
+            // The save operation will handle any file access errors
+            return false;
+        }
     }
 }

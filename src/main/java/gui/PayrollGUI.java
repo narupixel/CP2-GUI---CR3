@@ -173,24 +173,21 @@ public class PayrollGUI extends JFrame {
     private void initializeEditingFields() {
         // Create text fields for all employee attributes
         employeeNumberField = new JTextField(15);
-        employeeNumberField.setEditable(false); // Employee number should not be editable
-        employeeNumberField.setBackground(new Color(240, 240, 240));
-        employeeNumberField.setToolTipText("Employee number cannot be modified");
+        employeeNumberField.setEditable(true); // Make it editable
+        employeeNumberField.setBackground(new Color(255, 255, 240)); // Light yellow background to indicate special field
+        employeeNumberField.setToolTipText("Employee number - be careful when modifying to avoid duplicates");
+        
+        // Add a subtle border to make it clear it's editable but special
+        employeeNumberField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 150), 1),
+            BorderFactory.createEmptyBorder(2, 4, 2, 4)
+        ));
 
         lastNameField = new JTextField(15);
         lastNameField.setToolTipText("Enter employee's last name");
 
         firstNameField = new JTextField(15);
         firstNameField.setToolTipText("Enter employee's first name");
-
-        birthdayField = new JTextField(15);
-        birthdayField.setToolTipText("Enter birthday (MM/DD/YYYY format)");
-
-        addressField = new JTextField(25);
-        addressField.setToolTipText("Enter employee's complete address");
-
-        phoneNumberField = new JTextField(15);
-        phoneNumberField.setToolTipText("Enter employee's phone number");
 
         sssNumberField = new JTextField(15);
         sssNumberField.setToolTipText("Enter SSS number");
@@ -203,33 +200,6 @@ public class PayrollGUI extends JFrame {
 
         pagibigNumberField = new JTextField(15);
         pagibigNumberField.setToolTipText("Enter Pag-IBIG number");
-
-        statusField = new JTextField(15);
-        statusField.setToolTipText("Enter employment status");
-
-        positionField = new JTextField(15);
-        positionField.setToolTipText("Enter job position");
-
-        immediateSupervisorField = new JTextField(15);
-        immediateSupervisorField.setToolTipText("Enter immediate supervisor's name");
-
-        basicSalaryField = new JTextField(15);
-        basicSalaryField.setToolTipText("Enter basic salary amount");
-
-        riceSubsidyField = new JTextField(15);
-        riceSubsidyField.setToolTipText("Enter rice subsidy amount");
-
-        phoneAllowanceField = new JTextField(15);
-        phoneAllowanceField.setToolTipText("Enter phone allowance amount");
-
-        clothingAllowanceField = new JTextField(15);
-        clothingAllowanceField.setToolTipText("Enter clothing allowance amount");
-
-        grossSemiMonthlyRateField = new JTextField(15);
-        grossSemiMonthlyRateField.setToolTipText("Enter gross semi-monthly rate");
-
-        hourlyRateField = new JTextField(15);
-        hourlyRateField.setToolTipText("Enter hourly rate");
 
         // Add change listeners to detect data modifications
         addChangeListeners();
@@ -647,12 +617,55 @@ public class PayrollGUI extends JFrame {
     }
 
     /**
+     * Checks if the given employee number already exists in the system.
+     * This method prevents duplicate employee numbers which could cause data integrity issues.
+     * 
+     * @param employeeNumber The employee number to check for existence
+     * @return true if the employee number already exists, false otherwise
+     */
+    private boolean isEmployeeNumberExists(String employeeNumber) {
+        return employees.stream()
+            .anyMatch(emp -> emp.getEmployeeNumber().equals(employeeNumber));
+    }
+
+    /**
      * Validates all employee data entered in the editing fields.
      * Checks for required fields and proper data formats for essential employee information.
      * 
      * @return true if all data is valid, false otherwise
      */
     private boolean validateEmployeeData() {
+        // Check Employee Number field
+        if (employeeNumberField.getText().trim().isEmpty()) {
+            showValidationError("Employee Number is required.");
+            employeeNumberField.requestFocus();
+            return false;
+        }
+        
+        // Validate employee number format (should be numeric and reasonable length)
+        String empNumber = employeeNumberField.getText().trim();
+        try {
+            int number = Integer.parseInt(empNumber);
+            if (number <= 0) {
+                showValidationError("Employee Number must be a positive number.");
+                employeeNumberField.requestFocus();
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            showValidationError("Employee Number must be a valid number.");
+            employeeNumberField.requestFocus();
+            return false;
+        }
+        
+        // Check for duplicate employee number (only if it's different from the current employee's number)
+        if (selectedEmployee != null && !empNumber.equals(selectedEmployee.getEmployeeNumber())) {
+            if (isEmployeeNumberExists(empNumber)) {
+                showValidationError("Employee Number " + empNumber + " already exists. Please choose a different number.");
+                employeeNumberField.requestFocus();
+                return false;
+            }
+        }
+        
         // Check required string fields
         if (lastNameField.getText().trim().isEmpty()) {
             showValidationError("Last name is required.");
@@ -691,9 +704,12 @@ public class PayrollGUI extends JFrame {
      */
     private void updateEmployeeObject() {
         if (selectedEmployee != null) {
+            String originalEmployeeNumber = selectedEmployee.getEmployeeNumber();
+            String newEmployeeNumber = employeeNumberField.getText().trim();
+            
             // Create a new EmployeeProfile object with updated data
             EmployeeProfile updatedEmployee = new EmployeeProfile(
-                selectedEmployee.getEmployeeNumber(), // Keep the same employee number
+                newEmployeeNumber, // Use the potentially updated employee number
                 lastNameField.getText().trim(),
                 firstNameField.getText().trim(),
                 selectedEmployee.getBirthday(), // Keep existing birthday
@@ -714,9 +730,9 @@ public class PayrollGUI extends JFrame {
                 selectedEmployee.getHourlyRate() // Keep existing hourly rate
             );
             
-            // Find and replace the employee in the list
+            // Find and replace the employee in the list using the original employee number
             for (int i = 0; i < employees.size(); i++) {
-                if (employees.get(i).getEmployeeNumber().equals(selectedEmployee.getEmployeeNumber())) {
+                if (employees.get(i).getEmployeeNumber().equals(originalEmployeeNumber)) {
                     employees.set(i, updatedEmployee);
                     selectedEmployee = updatedEmployee; // Update the reference
                     break;
@@ -795,6 +811,49 @@ public class PayrollGUI extends JFrame {
         
         // Clear the editing fields
         clearEditingFields();
+    }
+
+    /**
+     * Refreshes the employee data and automatically selects the specified employee.
+     * This method is useful when a new employee is added and we want to show their
+     * information immediately after the refresh.
+     * 
+     * @param employeeNumber The employee number to select after refresh
+     */
+    public void refreshEmployeeDataAndSelect(String employeeNumber) {
+        // First refresh all the data
+        refreshEmployeeData();
+        
+        // Then find and select the specified employee
+        if (employeeNumber != null && !employeeNumber.trim().isEmpty()) {
+            selectEmployeeByNumber(employeeNumber);
+        }
+    }
+
+    /**
+     * Selects an employee in the table by their employee number and populates the editing fields.
+     * This method is used to automatically select a newly added employee.
+     * 
+     * @param employeeNumber The employee number to select
+     */
+    private void selectEmployeeByNumber(String employeeNumber) {
+        // Search through the table model to find the employee
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            String tableEmployeeNumber = (String) tableModel.getValueAt(row, 0);
+            if (employeeNumber.equals(tableEmployeeNumber)) {
+                // Convert model row to view row (in case of sorting)
+                int viewRow = employeeTable.convertRowIndexToView(row);
+                
+                // Select the row in the table
+                employeeTable.setRowSelectionInterval(viewRow, viewRow);
+                
+                // Scroll to make the selected row visible
+                employeeTable.scrollRectToVisible(employeeTable.getCellRect(viewRow, 0, true));
+                
+                // The selection listener will automatically populate the fields
+                break;
+            }
+        }
     }
 
     /**
