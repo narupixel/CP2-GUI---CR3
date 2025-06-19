@@ -47,32 +47,22 @@ public class PayrollGUI extends JFrame {
 
     /**
      * Employee editing components for update functionality.
+     * Only includes the essential identification fields.
      */
     private JTextField employeeNumberField;          // Field for employee number (read-only)
     private JTextField lastNameField;                // Field for last name
     private JTextField firstNameField;               // Field for first name
-    private JTextField birthdayField;                // Field for birthday
-    private JTextField addressField;                 // Field for address
-    private JTextField phoneNumberField;             // Field for phone number
     private JTextField sssNumberField;               // Field for SSS number
     private JTextField philhealthNumberField;        // Field for PhilHealth number
     private JTextField tinNumberField;               // Field for TIN number
     private JTextField pagibigNumberField;           // Field for Pag-IBIG number
-    private JTextField statusField;                  // Field for employment status
-    private JTextField positionField;                // Field for position
-    private JTextField immediateSupervisorField;     // Field for immediate supervisor
-    private JTextField basicSalaryField;             // Field for basic salary
-    private JTextField riceSubsidyField;             // Field for rice subsidy
-    private JTextField phoneAllowanceField;          // Field for phone allowance
-    private JTextField clothingAllowanceField;       // Field for clothing allowance
-    private JTextField grossSemiMonthlyRateField;    // Field for gross semi-monthly rate
-    private JTextField hourlyRateField;              // Field for hourly rate
 
     /**
      * Data components used for employee management and system operations.
      */
     private List<EmployeeProfile> employees;         // List of all employees loaded from the system
     private EmployeeProfile selectedEmployee;       // Currently selected employee from the table
+    private String filePath = "src/main/resources/Employee Details.tsv"; // Path to the employee data file
 
     /**
      * Constructor that initializes the main Employee Management GUI and sets up all components.
@@ -171,15 +161,14 @@ public class PayrollGUI extends JFrame {
      * optimal user experience during employee data entry and modification.
      */
     private void initializeEditingFields() {
-        // Create text fields for all employee attributes
+        // Create text fields for essential employee attributes only
         employeeNumberField = new JTextField(15);
-        employeeNumberField.setEditable(true); // Make it editable
-        employeeNumberField.setBackground(new Color(255, 255, 240)); // Light yellow background to indicate special field
-        employeeNumberField.setToolTipText("Employee number - be careful when modifying to avoid duplicates");
+        employeeNumberField.setEditable(false); // Read-only as requested by client
+        employeeNumberField.setBackground(Color.LIGHT_GRAY); // Grey background to indicate read-only
+        employeeNumberField.setToolTipText("Employee number - read-only field");
         
-        // Add a subtle border to make it clear it's editable but special
         employeeNumberField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 150), 1),
+            BorderFactory.createLineBorder(Color.GRAY, 1),
             BorderFactory.createEmptyBorder(2, 4, 2, 4)
         ));
 
@@ -201,17 +190,35 @@ public class PayrollGUI extends JFrame {
         pagibigNumberField = new JTextField(15);
         pagibigNumberField.setToolTipText("Enter Pag-IBIG number");
 
-        // Add change listeners to detect data modifications
         addChangeListeners();
     }
 
     /**
-     * Adds change listeners to all text fields to track when data has been modified.
-     * This enables proper state management for the Update button and validation.
+     * Adds change listeners to all editable text fields to track when data has been modified.
+     * Employee number field is excluded since it's read-only.
      */
     private void addChangeListeners() {
-        // Change listeners can be added here for future enhancements
-        // Currently not implementing data modification tracking for simplicity
+        JTextField[] editableFields = {
+            lastNameField, firstNameField, sssNumberField, 
+            philhealthNumberField, tinNumberField, pagibigNumberField
+        };
+
+        for (JTextField field : editableFields) {
+            field.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                @Override
+                public void insertUpdate(javax.swing.event.DocumentEvent e) { 
+                    // Data modification tracking can be added here if needed
+                }
+                @Override
+                public void removeUpdate(javax.swing.event.DocumentEvent e) { 
+                    // Data modification tracking can be added here if needed
+                }
+                @Override
+                public void changedUpdate(javax.swing.event.DocumentEvent e) { 
+                    // Data modification tracking can be added here if needed
+                }
+            });
+        }
     }
 
     /**
@@ -505,16 +512,14 @@ public class PayrollGUI extends JFrame {
             return;
         }
 
-        // Show confirmation dialog with employee details
+        // Show confirmation dialog with employee details (removed Current Position line)
         String confirmMessage = String.format(
             "Are you sure you want to update the record for:\n\n" +
-            "Employee: %s %s (%s)\n" +
-            "Current Position: %s\n\n" +
+            "Employee: %s %s (%s)\n\n" +
             "This action will modify the employee's information in the system.",
             firstNameField.getText().trim(),
             lastNameField.getText().trim(),
-            employeeNumberField.getText().trim(),
-            selectedEmployee.getPosition() // Use the current employee's position
+            employeeNumberField.getText().trim()
         );
 
         int result = JOptionPane.showConfirmDialog(this, 
@@ -539,8 +544,6 @@ public class PayrollGUI extends JFrame {
                     "Employee record updated successfully!", 
                     "Update Successful", 
                     JOptionPane.INFORMATION_MESSAGE);
-                
-                // Reset modification flag
                 
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, 
@@ -569,18 +572,15 @@ public class PayrollGUI extends JFrame {
         String employeeFirstName = selectedEmployee.getFirstName();
         String employeeLastName = selectedEmployee.getLastName();
         String employeeNumber = selectedEmployee.getEmployeeNumber();
-        String employeePosition = selectedEmployee.getPosition();
 
-        // Show confirmation dialog with employee details
+        // Show confirmation dialog with employee details (removed Position line)
         String confirmMessage = String.format(
             "Are you sure you want to delete the record for:\n\n" +
-            "Employee: %s %s (%s)\n" +
-            "Position: %s\n\n" +
+            "Employee: %s %s (%s)\n\n" +
             "This action cannot be undone!",
             employeeFirstName,
             employeeLastName,
-            employeeNumber,
-            employeePosition
+            employeeNumber
         );
 
         int result = JOptionPane.showConfirmDialog(this, 
@@ -617,54 +617,13 @@ public class PayrollGUI extends JFrame {
     }
 
     /**
-     * Checks if the given employee number already exists in the system.
-     * This method prevents duplicate employee numbers which could cause data integrity issues.
-     * 
-     * @param employeeNumber The employee number to check for existence
-     * @return true if the employee number already exists, false otherwise
-     */
-    private boolean isEmployeeNumberExists(String employeeNumber) {
-        return employees.stream()
-            .anyMatch(emp -> emp.getEmployeeNumber().equals(employeeNumber));
-    }
-
-    /**
      * Validates all employee data entered in the editing fields.
      * Checks for required fields and proper data formats for essential employee information.
      * 
      * @return true if all data is valid, false otherwise
      */
     private boolean validateEmployeeData() {
-        // Check Employee Number field
-        if (employeeNumberField.getText().trim().isEmpty()) {
-            showValidationError("Employee Number is required.");
-            employeeNumberField.requestFocus();
-            return false;
-        }
-        
-        // Validate employee number format (should be numeric and reasonable length)
-        String empNumber = employeeNumberField.getText().trim();
-        try {
-            int number = Integer.parseInt(empNumber);
-            if (number <= 0) {
-                showValidationError("Employee Number must be a positive number.");
-                employeeNumberField.requestFocus();
-                return false;
-            }
-        } catch (NumberFormatException e) {
-            showValidationError("Employee Number must be a valid number.");
-            employeeNumberField.requestFocus();
-            return false;
-        }
-        
-        // Check for duplicate employee number (only if it's different from the current employee's number)
-        if (selectedEmployee != null && !empNumber.equals(selectedEmployee.getEmployeeNumber())) {
-            if (isEmployeeNumberExists(empNumber)) {
-                showValidationError("Employee Number " + empNumber + " already exists. Please choose a different number.");
-                employeeNumberField.requestFocus();
-                return false;
-            }
-        }
+        // Employee number validation removed since it's read-only
         
         // Check required string fields
         if (lastNameField.getText().trim().isEmpty()) {
@@ -704,14 +663,11 @@ public class PayrollGUI extends JFrame {
      */
     private void updateEmployeeObject() {
         if (selectedEmployee != null) {
-            String originalEmployeeNumber = selectedEmployee.getEmployeeNumber();
-            String newEmployeeNumber = employeeNumberField.getText().trim();
-            
             // Create a new EmployeeProfile object with updated data
             EmployeeProfile updatedEmployee = new EmployeeProfile(
-                newEmployeeNumber, // Use the potentially updated employee number
-                lastNameField.getText().trim(),
-                firstNameField.getText().trim(),
+                selectedEmployee.getEmployeeNumber(), // Keep the original employee number (read-only)
+                lastNameField.getText().trim(),       // Fix: changed from setText() to getText()
+                firstNameField.getText().trim(),      // Fix: changed from setText() to getText()
                 selectedEmployee.getBirthday(), // Keep existing birthday
                 selectedEmployee.getAddress(), // Keep existing address
                 selectedEmployee.getPhoneNumber(), // Keep existing phone
@@ -730,9 +686,9 @@ public class PayrollGUI extends JFrame {
                 selectedEmployee.getHourlyRate() // Keep existing hourly rate
             );
             
-            // Find and replace the employee in the list using the original employee number
+            // Find and replace the employee in the list
             for (int i = 0; i < employees.size(); i++) {
-                if (employees.get(i).getEmployeeNumber().equals(originalEmployeeNumber)) {
+                if (employees.get(i).getEmployeeNumber().equals(selectedEmployee.getEmployeeNumber())) {
                     employees.set(i, updatedEmployee);
                     selectedEmployee = updatedEmployee; // Update the reference
                     break;
