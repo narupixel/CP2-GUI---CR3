@@ -125,26 +125,29 @@ public class NewEmployeeGUI extends JDialog {
     }
 
     /**
-     * Sets up event handlers for user interactions with the dialog.
-     * This method configures action listeners for the Save and Cancel buttons,
-     * as well as keyboard shortcuts for improved user experience.
+     * Sets up event handlers for all interactive components in the dialog.
+     * This method configures button actions and other user interface interactions
+     * to provide appropriate responses to user input.
      */
     private void setupEventHandlers() {
-        // Save button - validates and saves the new employee
+        // Save button action
         saveButton.addActionListener(this::saveEmployee);
         
-        // Cancel button - closes the dialog without saving
-        cancelButton.addActionListener(e -> dispose());
+        // Cancel button action - fix the close behavior
+        cancelButton.addActionListener(e -> {
+            // Close the dialog properly
+            setVisible(false);
+            dispose(); // This releases resources and closes the dialog
+        });
         
-        // Add keyboard shortcuts
-        getRootPane().setDefaultButton(saveButton); // Enter key triggers save
+        // Set default close operation
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         
-        // Add Escape key binding for cancel
-        KeyStroke escapeKeyStroke = KeyStroke.getKeyStroke("ESCAPE");
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(escapeKeyStroke, "CANCEL");
-        getRootPane().getActionMap().put("CANCEL", new AbstractAction() {
+        // Handle window closing event (X button)
+        addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                // Properly dispose of the dialog
                 dispose();
             }
         });

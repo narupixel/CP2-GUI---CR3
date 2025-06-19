@@ -8,20 +8,21 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 
 public class TimeLog {
+    // Class fields
     private String employeeNumber;
-    private String lastName;
-    private String firstName;
+    private String lastName;        // Add missing field
+    private String firstName;       // Add missing field
     private LocalDate date;
-    private LocalTime logIn;
-    private LocalTime logOut;
+    private LocalTime timeIn;
+    private LocalTime timeOut;
     private double hoursWorked;
     private double overtime;
     private int weekNumber;
     private boolean lateLoginDeduction;
 
     // Constants
-    private static final LocalTime STANDARD_LOGIN = LocalTime.of(8, 0);
     private static final LocalTime GRACE_PERIOD = LocalTime.of(8, 10);
+    // Remove the unused STANDARD_LOGIN constant
 
     public TimeLog(String employeeNumber, String lastName, String firstName, LocalDate date,
                    LocalTime logIn, LocalTime logOut) {
@@ -29,8 +30,8 @@ public class TimeLog {
         this.lastName = lastName;
         this.firstName = firstName;
         this.date = date;
-        this.logIn = logIn;
-        this.logOut = logOut;
+        this.timeIn = logIn;
+        this.timeOut = logOut;
         this.hoursWorked = calculateHoursWorked();
         this.overtime = calculateOvertime();
         this.weekNumber = date.get(WeekFields.ISO.weekOfWeekBasedYear());
@@ -38,19 +39,19 @@ public class TimeLog {
     }
 
     private double calculateHoursWorked() {
-    Duration worked = Duration.between(logIn, logOut);
+    Duration worked = Duration.between(timeIn, timeOut);
     double hours = worked.toMinutes() / 60.0;
     return Math.min(hours, 8.0); // Only up to 8 hours counted as regular
     }
 
     private double calculateOvertime() {
-    Duration worked = Duration.between(logIn, logOut);
+    Duration worked = Duration.between(timeIn, timeOut);
     double hours = worked.toMinutes() / 60.0;
     return Math.max(0, hours - 8.0); // Overtime is any hour above 8
     }
 
     private boolean isLateLogin() {
-        return logIn.isAfter(GRACE_PERIOD);
+        return timeIn.isAfter(GRACE_PERIOD);
     }
 
     // Getters
@@ -58,8 +59,8 @@ public class TimeLog {
     public String getLastName() { return lastName; }
     public String getFirstName() { return firstName; }
     public LocalDate getDate() { return date; }
-    public LocalTime getLogIn() { return logIn; }
-    public LocalTime getLogOut() { return logOut; }
+    public LocalTime getLogIn() { return timeIn; }
+    public LocalTime getLogOut() { return timeOut; }
     public double getHoursWorked() { return hoursWorked; }
     public double getOvertime() { return overtime; }
     public int getWeekNumber() { return weekNumber; }
