@@ -6,10 +6,14 @@ import dataLoader.LoadEmployeeData;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.event.DocumentListener;  // Add this import
+import javax.swing.event.DocumentEvent;     // Add this import
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * PayrollGUI.java
@@ -65,6 +69,10 @@ public class PayrollGUI extends JFrame {
      */
     private List<EmployeeProfile> employees;         // List of all employees loaded from the system
     private EmployeeProfile selectedEmployee;       // Currently selected employee from the table
+
+    // Add these near the top of the class with other field declarations
+    private Runnable populateOriginalValues;
+    private Runnable checkForChanges;
 
     /**
      * Constructor that initializes the main Employee Management GUI and sets up all components.
@@ -143,21 +151,25 @@ public class PayrollGUI extends JFrame {
      * and initial states for optimal user experience.
      */
     private void initializeButtons() {
-        // Employee management buttons
+        // Employee management buttons with fixed sizes
         viewEmployeeButton = new JButton("View Details");
         viewEmployeeButton.setEnabled(false);
         viewEmployeeButton.setToolTipText("View detailed information for the selected employee");
+        viewEmployeeButton.setPreferredSize(new Dimension(120, 25));
 
         newEmployeeButton = new JButton("New Employee");
         newEmployeeButton.setToolTipText("Add a new employee to the system");
+        newEmployeeButton.setPreferredSize(new Dimension(120, 25));
 
         updateEmployeeButton = new JButton("Update Employee");
         updateEmployeeButton.setEnabled(false);
         updateEmployeeButton.setToolTipText("Update information for the selected employee");
+        updateEmployeeButton.setPreferredSize(new Dimension(140, 25));
 
         deleteEmployeeButton = new JButton("Delete Employee");
         deleteEmployeeButton.setEnabled(false);
         deleteEmployeeButton.setToolTipText("Delete the selected employee from the system");
+        deleteEmployeeButton.setPreferredSize(new Dimension(140, 25));
 
         // Search components
         searchField = new JTextField(15);
@@ -166,6 +178,7 @@ public class PayrollGUI extends JFrame {
         
         searchButton = new JButton("Search & View");
         searchButton.setToolTipText("Search for employee by number and open their details");
+        searchButton.setPreferredSize(new Dimension(120, 25));
         
         // Add event listeners
         viewEmployeeButton.addActionListener(e -> viewEmployeeDetails());
@@ -218,26 +231,69 @@ public class PayrollGUI extends JFrame {
      * Employee number field is excluded since it's read-only.
      */
     private void addChangeListeners() {
+        // Create class fields to track original field values
+        final Map<JTextField, String> originalValues = new HashMap<>();
+        
         JTextField[] editableFields = {
             lastNameField, firstNameField, sssNumberField, 
             philhealthNumberField, tinNumberField, pagibigNumberField
         };
 
+        // First define the checkForChanges method
+        checkForChanges = () -> {
+            if (selectedEmployee == null) {
+                updateEmployeeButton.setEnabled(false);
+                return;
+            }
+            
+            boolean hasChanges = false;
+            
+            for (JTextField field : editableFields) {
+                String originalValue = originalValues.get(field);
+                String currentValue = field.getText();
+                
+                if (originalValue != null && !originalValue.equals(currentValue)) {
+                    hasChanges = true;
+                    break;
+                }
+            }
+            
+            // Only enable the update button if there are actual changes
+            updateEmployeeButton.setEnabled(hasChanges);
+        };
+        
+        // Method to store original values when an employee is selected
+        populateOriginalValues = () -> {
+            if (selectedEmployee != null) {
+                originalValues.put(lastNameField, lastNameField.getText());
+                originalValues.put(firstNameField, firstNameField.getText());
+                originalValues.put(sssNumberField, sssNumberField.getText());
+                originalValues.put(philhealthNumberField, philhealthNumberField.getText());
+                originalValues.put(tinNumberField, tinNumberField.getText());
+                originalValues.put(pagibigNumberField, pagibigNumberField.getText());
+            }
+        };
+
+        // Now create the document listener that will use the checkForChanges method
+        DocumentListener changeListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { 
+                // Use final checkForChanges Runnable from the enclosing class
+                PayrollGUI.this.checkForChanges.run();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) { 
+                PayrollGUI.this.checkForChanges.run();
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) { 
+                PayrollGUI.this.checkForChanges.run();
+            }
+        };
+        
+        // Add the listener to each field
         for (JTextField field : editableFields) {
-            field.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-                @Override
-                public void insertUpdate(javax.swing.event.DocumentEvent e) { 
-                    // Data modification tracking can be added here if needed
-                }
-                @Override
-                public void removeUpdate(javax.swing.event.DocumentEvent e) { 
-                    // Data modification tracking can be added here if needed
-                }
-                @Override
-                public void changedUpdate(javax.swing.event.DocumentEvent e) { 
-                    // Data modification tracking can be added here if needed
-                }
-            });
+            field.getDocument().addDocumentListener(changeListener);
         }
     }
 
@@ -246,6 +302,7 @@ public class PayrollGUI extends JFrame {
      * Extracts the required fields from each employee profile and adds them
      * as rows to the table model for display to the user.
      */
+    @SuppressWarnings("unused") // Method may be used in future implementations
     private void setupTableData() {
         // Clear any existing data in the table before adding new records
         tableModel.setRowCount(0);
@@ -284,6 +341,14 @@ public class PayrollGUI extends JFrame {
             philhealthNumberField.setText(employee.getPhilhealthNumber());
             tinNumberField.setText(employee.getTinNumber());
             pagibigNumberField.setText(employee.getPagibigNumber());
+            
+            // Store original values for comparison
+            if (populateOriginalValues != null) {
+                populateOriginalValues.run();
+            }
+            
+            // Initially disable update button until changes are made
+            updateEmployeeButton.setEnabled(false);
         }
     }
 
@@ -300,6 +365,9 @@ public class PayrollGUI extends JFrame {
         for (JTextField field : fields) {
             field.setText("");
         }
+        
+        // Disable update button when fields are cleared
+        updateEmployeeButton.setEnabled(false);
     }
 
     /**
@@ -355,6 +423,19 @@ public class PayrollGUI extends JFrame {
         editingPanel.add(new JLabel("Pag-IBIG Number:"), gbc);
         gbc.gridx = 2;
         editingPanel.add(pagibigNumberField, gbc);
+        
+        // Row 4: Action buttons panel
+        gbc.gridx = 0; gbc.gridy = 3;
+        gbc.gridwidth = 6;  // Span across all columns
+        gbc.anchor = GridBagConstraints.EAST; // Align to the right
+        
+        // Create a panel for buttons
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        buttonsPanel.setBackground(Color.WHITE);
+        buttonsPanel.add(updateEmployeeButton);
+        buttonsPanel.add(deleteEmployeeButton);
+        
+        editingPanel.add(buttonsPanel, gbc);
 
         return editingPanel;
     }
@@ -401,17 +482,6 @@ public class PayrollGUI extends JFrame {
         // Add all panels to the main frame with proper layout positioning
         add(buttonPanel, BorderLayout.NORTH);
         add(mainPanel, BorderLayout.CENTER);
-
-        // Create a status panel for employee count and system information
-        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        statusPanel.setBackground(new Color(240, 240, 240));
-        statusPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        
-        JLabel statusLabel = new JLabel("Total Employees: " + employees.size());
-        statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        statusPanel.add(statusLabel);
-        
-        add(statusPanel, BorderLayout.SOUTH);
     }
 
     /**
@@ -435,11 +505,9 @@ public class PayrollGUI extends JFrame {
         separator.setPreferredSize(new Dimension(2, 25));
         buttonPanel.add(separator);
         
-        // Add employee management buttons
+        // Add employee management buttons (remove update and delete buttons)
         buttonPanel.add(viewEmployeeButton);
         buttonPanel.add(newEmployeeButton);
-        buttonPanel.add(updateEmployeeButton);
-        buttonPanel.add(deleteEmployeeButton);
         
         return buttonPanel;
     }
@@ -899,12 +967,49 @@ public class PayrollGUI extends JFrame {
     }
 
     /**
+     * Selects the provided employee in the table.
+     * This method finds the employee in the table model and selects their row,
+     * which also triggers the selection listener to update the edit fields.
+     * 
+     * @param employee The employee to select in the table
+     */
+    private void selectEmployeeInTable(EmployeeProfile employee) {
+        if (employee == null) return;
+        
+        // This method is essentially the same as selectEmployeeByNumber but takes an employee parameter
+        String employeeNumber = employee.getEmployeeNumber();
+        
+        // Search through the table model to find the employee
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            String tableEmployeeNumber = (String) tableModel.getValueAt(row, 0);
+            if (employeeNumber.equals(tableEmployeeNumber)) {
+                // Convert model row to view row (in case of sorting)
+                int viewRow = employeeTable.convertRowIndexToView(row);
+                
+                // Select the row in the table
+                employeeTable.setRowSelectionInterval(viewRow, viewRow);
+                
+                // Scroll to make the selected row visible
+                employeeTable.scrollRectToVisible(employeeTable.getCellRect(viewRow, 0, true));
+                
+                // The selection listener will automatically set selectedEmployee and populate fields
+                break;
+            }
+        }
+    }
+
+    /**
      * Searches for an employee by employee number and opens their details dialog.
      * This method provides quick access to employee information without needing
      * to find and select the employee in the table first.
+     * 
+     * @param employeeNumber The employee number to search for (if null, uses searchField)
      */
-    private void searchAndViewEmployee() {
-        String searchNumber = searchField.getText().trim();
+    public void searchAndViewEmployee(String employeeNumber) {
+        // If no employee number is provided, get it from the search field
+        String searchNumber = employeeNumber != null ? 
+                             employeeNumber : 
+                             searchField.getText().trim();
         
         // Validate search input
         if (searchNumber.isEmpty()) {
@@ -935,7 +1040,9 @@ public class PayrollGUI extends JFrame {
             selectEmployeeInTable(foundEmployee);
             
             // Clear the search field after successful search
-            searchField.setText("");
+            if (employeeNumber == null) {
+                searchField.setText("");
+            }
             
         } else {
             // Employee not found
@@ -944,35 +1051,19 @@ public class PayrollGUI extends JFrame {
                 "Please check the employee number and try again.", 
                 "Employee Not Found", 
                 JOptionPane.WARNING_MESSAGE);
-            searchField.selectAll(); // Select all text for easy correction
-            searchField.requestFocus();
-        }
-    }
-    
-    /**
-     * Selects the specified employee in the table and populates the editing fields.
-     * This method provides visual feedback when an employee is found via search.
-     * 
-     * @param employee The employee to select in the table
-     */
-    private void selectEmployeeInTable(EmployeeProfile employee) {
-        // Find the employee in the table model
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            String tableEmployeeNumber = (String) tableModel.getValueAt(row, 0);
-            if (employee.getEmployeeNumber().equals(tableEmployeeNumber)) {
-                // Convert model row to view row (in case of sorting)
-                int viewRow = employeeTable.convertRowIndexToView(row);
-                
-                // Select the row in the table
-                employeeTable.setRowSelectionInterval(viewRow, viewRow);
-                
-                // Scroll to make the selected row visible
-                employeeTable.scrollRectToVisible(employeeTable.getCellRect(viewRow, 0, true));
-                
-                // The selection listener will automatically populate the editing fields
-                break;
+            
+            if (employeeNumber == null) {
+                searchField.selectAll(); // Select all text for easy correction
+                searchField.requestFocus();
             }
         }
+    }
+
+    /**
+     * Overloaded version that uses the search field value
+     */
+    private void searchAndViewEmployee() {
+        searchAndViewEmployee(null);
     }
 
     /**
@@ -998,7 +1089,7 @@ public class PayrollGUI extends JFrame {
         boolean hasSelection = (selectedEmployee != null);
         
         viewEmployeeButton.setEnabled(hasSelection);
-        updateEmployeeButton.setEnabled(hasSelection);
+        // Don't enable the update button here, let the change tracking handle it
         deleteEmployeeButton.setEnabled(hasSelection);
     }
 }
