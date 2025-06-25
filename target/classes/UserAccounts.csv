@@ -1,0 +1,3 @@
+username,passwordHash,salt,employeeNumber,email,role
+admin,qsTyJPbvwnsBMAJV1ocYVLVWgNKFyCbl7Nfo2/n9m/g=,9gP0+N0mlZ+TI1DXTcrJ2A==,ADMIN,admin@motorph.com,ADMIN
+garcia,t/ouA5lYbyJhgH41puYVD8sKbE27jceQxIpolyt4ZaQ=,OY+F2MidpBgShlqv0uwF2w==,10001,garcia@motorph.com,USER

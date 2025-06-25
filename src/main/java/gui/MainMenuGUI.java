@@ -1,5 +1,7 @@
 package gui;
 
+import models.User;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -16,12 +18,18 @@ public class MainMenuGUI extends JFrame {
     
     private JButton viewSpecificEmployeeButton;
     private JButton viewAllEmployeesButton;
+    private User currentUser;
+    private JLabel userInfoLabel;
     
     /**
      * Constructor that initializes the main menu GUI with buttons for
      * navigating to different parts of the application.
+     * 
+     * @param user The authenticated user
      */
-    public MainMenuGUI() {
+    public MainMenuGUI(User user) {
+        this.currentUser = user;
+        
         // Set up the main window
         setTitle("MotorPH Employee Management System");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -37,6 +45,14 @@ public class MainMenuGUI extends JFrame {
     }
     
     /**
+     * Alternative constructor for backward compatibility.
+     * Should not be used in production - always pass an authenticated user.
+     */
+    public MainMenuGUI() {
+        this(null);
+    }
+    
+    /**
      * Initializes the components of the main menu.
      */
     private void initializeComponents() {
@@ -47,6 +63,10 @@ public class MainMenuGUI extends JFrame {
         // Create main menu panel with buttons
         JPanel menuPanel = createMenuPanel();
         add(menuPanel, BorderLayout.CENTER);
+        
+        // Create a footer panel with user info and logout option
+        JPanel footerPanel = createFooterPanel();
+        add(footerPanel, BorderLayout.SOUTH);
     }
     
     /**
@@ -105,6 +125,50 @@ public class MainMenuGUI extends JFrame {
         menuPanel.add(Box.createVerticalGlue());
         
         return menuPanel;
+    }
+    
+    /**
+     * Creates a footer panel with user information and logout button.
+     * 
+     * @return JPanel containing the footer elements
+     */
+    private JPanel createFooterPanel() {
+        JPanel footerPanel = new JPanel(new BorderLayout());
+        footerPanel.setBackground(new Color(240, 240, 240));
+        footerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        
+        // Display current user info
+        String userInfo = currentUser != null ?
+                "Logged in as: " + currentUser.getUsername() + " (" + currentUser.getRole() + ")" :
+                "Not logged in";
+        userInfoLabel = new JLabel(userInfo);
+        userInfoLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        footerPanel.add(userInfoLabel, BorderLayout.WEST);
+        
+        // Create logout button
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.addActionListener(e -> logout());
+        footerPanel.add(logoutButton, BorderLayout.EAST);
+        
+        return footerPanel;
+    }
+    
+    /**
+     * Logs the current user out and returns to the login screen.
+     */
+    private void logout() {
+        int option = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to logout?",
+                "Confirm Logout",
+                JOptionPane.YES_NO_OPTION);
+                
+        if (option == JOptionPane.YES_OPTION) {
+            SwingUtilities.invokeLater(() -> {
+                LoginGUI loginGUI = new LoginGUI();
+                loginGUI.setVisible(true);
+                dispose();
+            });
+        }
     }
     
     /**
