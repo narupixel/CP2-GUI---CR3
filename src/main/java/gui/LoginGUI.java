@@ -5,7 +5,6 @@ import models.User;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -18,7 +17,6 @@ public class LoginGUI extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton loginButton;
-    private JButton forgotPasswordButton;
     private JLabel statusLabel;
     
     private final UserAuthManager authManager;
@@ -94,12 +92,14 @@ public class LoginGUI extends JFrame {
         JPanel formPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         
-        // Username field
+        // Username field - increase the width of the label area
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 0, 5, 10);
-        formPanel.add(new JLabel("Username:"), gbc);
+        JLabel usernameLabel = new JLabel("Username:");
+        usernameLabel.setPreferredSize(new Dimension(80, 20)); // Set fixed width for the label
+        formPanel.add(usernameLabel, gbc);
         
         usernameField = new JTextField(15);
         usernameField.addKeyListener(new KeyAdapter() {
@@ -114,11 +114,13 @@ public class LoginGUI extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         formPanel.add(usernameField, gbc);
         
-        // Password field
+        // Password field - also with fixed width label
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel("Password:"), gbc);
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setPreferredSize(new Dimension(80, 20)); // Set fixed width for the label
+        formPanel.add(passwordLabel, gbc);
         
         passwordField = new JPasswordField(15);
         passwordField.addKeyListener(new KeyAdapter() {
@@ -147,99 +149,19 @@ public class LoginGUI extends JFrame {
     }
     
     /**
-     * Creates the button panel with login and forgot password buttons.
+     * Creates the button panel with login button.
      *
      * @return The configured button panel
      */
     private JPanel createButtonPanel() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
-        forgotPasswordButton = new JButton("Forgot Password");
-        forgotPasswordButton.addActionListener(this::handleForgotPassword);
-        buttonPanel.add(forgotPasswordButton);
-        
         loginButton = new JButton("Login");
+        loginButton.setPreferredSize(new Dimension(80, 30)); // Set a fixed size for the button
         loginButton.addActionListener(e -> attemptLogin());
         buttonPanel.add(loginButton);
         
         return buttonPanel;
-    }
-    
-    /**
-     * Handles the forgot password action.
-     *
-     * @param e The action event
-     */
-    private void handleForgotPassword(ActionEvent e) {
-        String username = JOptionPane.showInputDialog(this,
-                "Enter your username to reset your password:",
-                "Password Reset",
-                JOptionPane.QUESTION_MESSAGE);
-        
-        if (username == null || username.trim().isEmpty()) {
-            return;
-        }
-        
-        User user = authManager.findUserByUsername(username.trim());
-        if (user == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Username not found. Please try again.",
-                    "Reset Failed",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        String token = authManager.generatePasswordResetToken(username);
-        
-        // In a real application, you would send this token via email
-        // For this demo, we'll just show it directly
-        JPasswordField newPassword = new JPasswordField();
-        JPasswordField confirmPassword = new JPasswordField();
-        
-        JPanel resetPanel = new JPanel(new GridLayout(4, 1, 5, 5));
-        resetPanel.add(new JLabel("A password reset token has been generated."));
-        resetPanel.add(new JLabel("Enter your new password:"));
-        resetPanel.add(newPassword);
-        resetPanel.add(new JLabel("Confirm new password:"));
-        resetPanel.add(confirmPassword);
-        
-        int result = JOptionPane.showConfirmDialog(this, resetPanel, 
-                "Password Reset", JOptionPane.OK_CANCEL_OPTION);
-        
-        if (result == JOptionPane.OK_OPTION) {
-            String newPasswordText = new String(newPassword.getPassword());
-            String confirmPasswordText = new String(confirmPassword.getPassword());
-            
-            if (newPasswordText.length() < 6) {
-                JOptionPane.showMessageDialog(this,
-                        "Password must be at least 6 characters.",
-                        "Password Too Short",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
-            if (!newPasswordText.equals(confirmPasswordText)) {
-                JOptionPane.showMessageDialog(this,
-                        "Passwords do not match.",
-                        "Password Mismatch",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
-            boolean success = authManager.resetPassword(token, newPasswordText);
-            
-            if (success) {
-                JOptionPane.showMessageDialog(this,
-                        "Password has been reset successfully.",
-                        "Password Reset",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "Failed to reset password. Please try again.",
-                        "Reset Failed",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
     }
     
     /**
