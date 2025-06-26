@@ -53,6 +53,22 @@ User accounts are stored in `UserAccounts.csv` and can be created in two ways:
 - Password reset functionality with secure token generation
 - Session tracking for authenticated users throughout the application
 
+## Security Implementation
+
+The application employs several security measures to protect user credentials:
+
+### Password Security
+- **Hashing Algorithm**: SHA-256 is used for password hashing
+- **Salt Implementation**: Each user account has a unique random salt
+- **Storage Format**: Both hashed passwords and salts are Base64-encoded in the UserAccounts.csv file
+
+### Login Security
+- Failed login attempts are tracked internally
+- Accounts are temporarily locked after 5 consecutive failed attempts
+- Password reset functionality is available for account recovery
+
+The SHA-256 algorithm was chosen for its balance of security strength, standard compliance, and implementation simplicity. While specialized password hashing algorithms like BCrypt provide additional security features, SHA-256 with proper salting offers strong protection against common password attacks while maintaining code simplicity (less setup in parameters, easier to understand).
+
 ## Usage Guide
 
 ### Login
