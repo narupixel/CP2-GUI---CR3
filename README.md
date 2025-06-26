@@ -47,9 +47,11 @@ User accounts are stored in `UserAccounts.csv` and can be created in two ways:
 - Screen resolution of 1280x720 or higher (recommended)
 
 ## Security Features
-- Passwords are stored with SHA-256 hashing and unique salts
-- Account lockout after 5 failed login attempts (15-minute lockout)
-- Session tracking for authenticated users
+- Passwords are stored using SHA-256 hashing with unique salts for each user
+- Salts and hashed passwords are encoded in Base64 format in the UserAccounts.csv file
+- Account lockout mechanism triggers after 5 failed login attempts (15-minute lockout period)
+- Password reset functionality with secure token generation
+- Session tracking for authenticated users throughout the application
 
 ## Usage Guide
 
